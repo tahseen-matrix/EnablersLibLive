@@ -5,7 +5,7 @@ import com.google.gson.JsonObject
 
 class ApiInterfaceModel private constructor() {
     interface OnApiResponseListener {
-        fun onResponsePopup(message: JsonObject?,   viewGroup: ViewGroup)
+        fun onResponsePopup(message: JsonObject?)
     }
 
     private var mListener: OnApiResponseListener? = null
@@ -17,15 +17,15 @@ class ApiInterfaceModel private constructor() {
     }
 
 
-    fun apiCall(message: JsonObject?,   viewGroup: ViewGroup) {
+    fun apiCall(message: JsonObject?) {
         if (mListener != null) {
-            onApiCallState(message,   viewGroup)
+            onApiCallState(message)
         }
     }
 
 
-    private fun onApiCallState(message: JsonObject?,   viewGroup: ViewGroup) {
-        mListener!!.onResponsePopup(message,   viewGroup)
+    private fun onApiCallState(message: JsonObject?) {
+        mListener!!.onResponsePopup(message)
     }
 
     companion object {
