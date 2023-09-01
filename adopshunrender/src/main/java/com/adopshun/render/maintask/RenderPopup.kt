@@ -21,7 +21,6 @@ import android.widget.RelativeLayout
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
-import androidx.appcompat.widget.AppCompatImageButton
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.content.res.ResourcesCompat
@@ -63,14 +62,13 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
     var alertDialog: AlertDialog? = null
     var index = 0
     var mLayout = 0
-    var mTextId=0
     var mContext: AppCompatActivity? = null
     var popArray: ArrayList<RenderModel.IdentifierDesign> = ArrayList()
     var sessionManager: PreferencesManager? = null
     private lateinit var appDb: AppDatabase
 
     @SuppressLint("InvalidAnalyticsName")
-    fun checkFirstRun(context: AppCompatActivity, layout: Int, textViewId:Int) {
+    fun checkFirstRun(context: AppCompatActivity, layout: Int) {
         val builder = AlertDialog.Builder(context)
         builder.setMessage("Do you want to show onboarding?")
         builder.setTitle("Adopshun")
@@ -82,7 +80,6 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                 ?.putBoolean(AppConstants.IS_FIRST_RUN, true)?.apply()
             mLayout = layout
             mContext = context
-            mTextId = textViewId
             appDb = AppDatabase.getDatabase(context)
             GlobalScope.launch(Dispatchers.IO) {
                 appDb.stepDao().clearStep()
@@ -107,24 +104,20 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
     }
 
 
-
-
-
-    fun showPopups(context: AppCompatActivity, layout: Int, textViewId:Int) {
+    fun showPopups(context: AppCompatActivity, layout: Int) {
         PreferencesManager.initializeInstance(context = context)
         sessionManager = PreferencesManager.instance
         context.startService(Intent(context, OnClearFromRecentService::class.java))
         if (context.getSharedPreferences("renderFirstPop", MODE_PRIVATE)
                 ?.getBoolean(AppConstants.IS_FIRST_RUN, false) == false
         ) {
-            checkFirstRun(context, layout, textViewId)
+            checkFirstRun(context, layout)
         }
         if (context.getSharedPreferences("renderFirstPop", MODE_PRIVATE)
                 ?.getBoolean(AppConstants.IS_POP_STATUS, false) == true
         ) {
             mLayout = layout
             mContext = context
-            mTextId = textViewId
             appDb = AppDatabase.getDatabase(context)
             Handler(Looper.myLooper()!!).postDelayed({
                 index = 0
@@ -179,8 +172,9 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
     }
 
     private fun getRootViewGroupPopUp(context: AppCompatActivity): ViewGroup {
-        return (context.findViewById<View>(android.R.id.content) ) as ViewGroup
+        return (context.findViewById<View>(android.R.id.content)) as ViewGroup
     }
+
     @SuppressLint("Range")
     private fun createPopup(
         context: AppCompatActivity,
@@ -535,6 +529,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
         return (context.findViewById<View>(android.R.id.content) as ViewGroup).getChildAt(0) as ViewGroup
     }
 
+    private var skipButton: AppCompatTextView? = null
 
     @SuppressLint("Range")
     internal fun pingToolTip(
@@ -554,93 +549,309 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
             val dynamicLayout = binding.dynamicLayout
             val closeButton = binding.btnCancel
             //  btnSkip
-            val skipButton = binding.skipBtn
+            skipButton = binding.skipBtnForSkipAllPing
+            if(skipButton != null){
+                    var counter2 = 100
+                    val arrayList = ArrayList<Int>()
+                    for (i in 0 until viewsList.size) {
+                        viewsList[i].id = counter2
+                        arrayList.add(viewsList[i].id)
+                        counter2++
+                    }
 
-            var counter2 = 100
-            val arrayList = ArrayList<Int>()
-            for (i in 0 until viewsList.size) {
-                viewsList[i].id = counter2
-                arrayList.add(viewsList[i].id)
-                counter2++
+                    var anchorView = View(context)
+                    for (i in 0 until viewsList.size) {
+                        if (viewsList[i].id.toString() == belongId) {
+                            anchorView = viewsList[i]
+                        }
+                    }
+
+                    val rootParams = RelativeLayout.LayoutParams(
+                        RelativeLayout.LayoutParams.MATCH_PARENT,
+                        RelativeLayout.LayoutParams.WRAP_CONTENT
+                    )
+
+                    val rectf = Rect()
+                    anchorView.getLocalVisibleRect(rectf)
+                    anchorView.getGlobalVisibleRect(rectf)
+
+                    val offsetViewBounds = Rect()
+                    anchorView.getDrawingRect(offsetViewBounds)
+                    mViewGroup.offsetDescendantRectToMyCoords(anchorView, offsetViewBounds)
+
+                    val relativeTop = offsetViewBounds.top
+
+                    val gravity: Int //Tooltip gravity
+                    val centerPoint = context.pxToDp(mViewGroup.height / 2)
+                    val viewY = context.pxToDp(relativeTop)
+                    val params: LinearLayout.LayoutParams =
+                        LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        )
+                    params.setMargins(50, 10, 50, 10)
+
+                    if (viewY < centerPoint) {
+                        gravity = Gravity.BOTTOM  //Tooltip gravity
+                        rootParams.addRule(RelativeLayout.BELOW, rootLinear.id)
+                        rootParams.setMargins(50, 50, 50, 50)
+                        skipButton!!.layoutParams = rootParams
+
+                    } else {
+                        gravity = Gravity.TOP  //Tooltip gravity
+                        rootParams.addRule(RelativeLayout.BELOW, skipButton!!.id)
+                        rootParams.setMargins(50, 50, 50, 0)
+                        rootLinear.layoutParams = rootParams
+                    }
+
+
+                    // Rest of your code here
+                    /*-------------Tooltip Start------------------------- */
+
+                    val tooltip = withContext(Dispatchers.Default) {
+                        SimpleTooltip.Builder(context)
+                            .anchorView(anchorView)
+                            .gravity(gravity)
+                            .dismissOnOutsideTouch(false)
+                            .dismissOnInsideTouch(false)
+                            .modal(true)
+                            .setWidth(mViewGroup.width)
+                            .transparentOverlay(false)
+                            .highlightShape(OverlayView.HIGHLIGHT_SHAPE_RECTANGULAR)
+                            .cornerRadius(20f)
+                            .overlayOffset(5f)
+                            .contentView(binding.root, skipButton!!.id)
+                            .focusable(true)
+                            .build()
+                    }
+                    tooltip.show()
+
+                    /*-------------Tooltip END------------------------- */
+                    skipButton!!.setOnClickListener {
+                        binding.root.visibility = View.GONE
+                        if (tooltip.isShowing) {
+                            tooltip.dismiss()
+                        }
+                    }
+
+                    closeButton.setOnClickListener {
+                        tooltip.dismiss()
+                        if (index < popArray.size - 1) {
+                            index++
+                            when (popArray[index].dialogType) {
+                                AppConstants.DIALOG_TYPE.popup -> {
+                                    createPopup(context, popArray[index])
+                                }
+                                AppConstants.DIALOG_TYPE.bottom -> {
+                                    createPopup(context, popArray[index])
+                                }
+                                else -> {
+                                    pingToolTip(context, popArray[index])
+                                }
+                            }
+                        }
+                    }
+
+                    val innerLayoutArray = identifierDesign.innerLayout
+
+                    for (j in innerLayoutArray.indices) {
+
+                        when (innerLayoutArray[j].type) {
+
+                            AppConstants.VIEWTYPE.LABEL -> {
+
+                                val title = AppCompatTextView(context)
+                                title.id = View.generateViewId()
+                                title.text = innerLayoutArray[j].title
+
+                                title.setTextSize(
+                                    TypedValue.COMPLEX_UNIT_SP,
+                                    innerLayoutArray[j].fontSize!!.toFloat()
+                                )
+                                applyFonts(context, title, innerLayoutArray[j])
+
+                                title.setTextColor(Color.parseColor(innerLayoutArray[j].textColor))
+
+                                val paramsText = LinearLayout.LayoutParams(
+                                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                                    LinearLayout.LayoutParams.WRAP_CONTENT
+                                )
+
+
+                                dynamicLayout.addView(title)
+
+                                if (innerLayoutArray[j].bottomMargin !== null) {
+                                    paramsText.setMargins(
+                                        20,
+                                        10,
+                                        20,
+                                        innerLayoutArray[j].bottomMargin.toInt()
+                                    )
+                                }
+                                if (innerLayoutArray[j].topMargin !== null) {
+                                    paramsText.setMargins(
+                                        20,
+                                        innerLayoutArray[j].topMargin.toInt(),
+                                        20,
+                                        10
+                                    )
+                                }
+
+                                when (innerLayoutArray[j].position) {
+
+                                    "center" -> {
+                                        title.gravity = Gravity.CENTER
+                                        paramsText.gravity = Gravity.CENTER
+
+                                    }
+                                    "left" -> {
+                                        title.gravity = Gravity.START
+                                        paramsText.gravity = Gravity.START
+                                    }
+                                    "right" -> {
+                                        title.gravity = Gravity.END
+                                        paramsText.gravity = Gravity.END
+                                    }
+                                }
+
+                                title.layoutParams = paramsText
+
+                            }
+
+                            AppConstants.VIEWTYPE.BUTTON -> {
+
+                                val button = AppCompatButton(context)
+                                button.id = View.generateViewId()
+                                button.isAllCaps = false
+                                button.text = innerLayoutArray[j].title
+                                button.setTextSize(
+                                    TypedValue.COMPLEX_UNIT_SP,
+                                    innerLayoutArray[j].fontSize.toFloat()
+                                )
+                                button.typeface =
+                                    ResourcesCompat.getFont(context, R.font.opensans_regular)
+                                button.setTextColor(Color.parseColor(innerLayoutArray[j].textColor))
+
+                                applyFonts(context, button, innerLayoutArray[j])
+
+                                ViewCompat.setBackgroundTintList(
+                                    button,
+                                    ColorStateList.valueOf(Color.parseColor(innerLayoutArray[j].backgroundColor))
+                                )
+
+                                val radius = 70 //radius will be 5px
+                                val gradientDrawable = GradientDrawable()
+                                gradientDrawable.setColor(context.resources.getColor(R.color.orange))
+                                gradientDrawable.cornerRadius = radius.toFloat()
+                                button.background = gradientDrawable
+
+                                dynamicLayout.addView(button)
+
+                                button.minHeight = 0
+                                button.minimumHeight = 0
+
+                                button.height = context.dpToPx(innerLayoutArray[j].height.toInt() + 7)
+
+                                button.textAlignment = View.TEXT_ALIGNMENT_CENTER
+
+                                button.setPadding(1, 10, 1, 10)
+
+                                val params: LinearLayout.LayoutParams
+                                if (innerLayoutArray[j].width == "initial") {
+                                    params = LinearLayout.LayoutParams(
+                                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                                        LinearLayout.LayoutParams.WRAP_CONTENT
+                                    )
+
+                                } else {
+
+                                    params = LinearLayout.LayoutParams(
+                                        LinearLayout.LayoutParams.MATCH_PARENT,
+                                        LinearLayout.LayoutParams.WRAP_CONTENT
+                                    )
+
+                                }
+                                when (innerLayoutArray[j].position) {
+
+                                    "center" -> {
+                                        params.gravity = Gravity.CENTER
+                                        button.gravity = Gravity.CENTER
+                                    }
+                                    "left" -> {
+                                        params.gravity = Gravity.START
+                                        button.gravity = Gravity.CENTER_VERTICAL
+                                    }
+                                    "end" -> {
+                                        params.gravity = Gravity.END
+                                        button.gravity = Gravity.CENTER_VERTICAL
+                                    }
+                                }
+                                button.layoutParams = params
+
+
+                                params.setMargins(
+                                    0,
+                                    innerLayoutArray[j].topMargin.toInt(),
+                                    0,
+                                    innerLayoutArray[j].bottomMargin.toInt()
+                                )
+
+                                button.layoutParams = params
+
+                                button.textAlignment = View.TEXT_ALIGNMENT_CENTER
+
+                                params.setMargins(
+                                    0, context.dpToPx(innerLayoutArray[j].topMargin.toInt()), 0,
+                                    context.dpToPx(innerLayoutArray[j].bottomMargin.toInt())
+                                )
+
+                                button.layoutParams = params
+
+                                button.setOnClickListener {
+                                    tooltip.dismiss()
+                                    if (index < popArray.size - 1) {
+                                        index++
+                                        when (popArray[index].dialogType) {
+                                            AppConstants.DIALOG_TYPE.popup -> {
+                                                createPopup(context, popArray[index])
+                                            }
+                                            AppConstants.DIALOG_TYPE.bottom -> {
+                                                createPopup(context, popArray[index])
+                                            }
+                                            else -> {
+
+                                                pingToolTip(context, popArray[index])
+                                            }
+                                        }
+                                    }
+                                    if (innerLayoutArray[j].buttonUrl.isNotEmpty()) {
+                                        Handler(Looper.myLooper()!!).postDelayed({
+
+                                            val URL_REGEX =
+                                                "^((https?|ftp)://|(www|ftp)\\.)?[a-z0-9-]+(\\.[a-z0-9-]+)+([/?].*)?$"
+                                            val p: Pattern = Pattern.compile(URL_REGEX)
+                                            val m: Matcher = p.matcher(innerLayoutArray[j].buttonUrl)
+                                            if (m.find()) {
+                                                val browserIntent =
+                                                    Intent(
+                                                        Intent.ACTION_VIEW,
+                                                        Uri.parse(innerLayoutArray[j].buttonUrl)
+                                                    )
+                                                context.startActivity(browserIntent)
+                                            }
+
+                                        }, 500)
+                                    }
+
+
+                                }
+
+                            }
+                        }
+
+                    }
             }
-
-            var anchorView = View(context)
-            for (i in 0 until viewsList.size) {
-                if (viewsList[i].id.toString() == belongId) {
-                    anchorView = viewsList[i]
-                }
-            }
-
-            val rootParams = RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.MATCH_PARENT,
-                RelativeLayout.LayoutParams.WRAP_CONTENT
-            )
-
-            val rectf = Rect()
-            anchorView.getLocalVisibleRect(rectf)
-            anchorView.getGlobalVisibleRect(rectf)
-
-            val offsetViewBounds = Rect()
-            anchorView.getDrawingRect(offsetViewBounds)
-            mViewGroup.offsetDescendantRectToMyCoords(anchorView, offsetViewBounds)
-
-            val relativeTop = offsetViewBounds.top
-
-            val gravity: Int //Tooltip gravity
-            val centerPoint = context.pxToDp(mViewGroup.height / 2)
-            val viewY = context.pxToDp(relativeTop)
-            val params: LinearLayout.LayoutParams =
-                LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-            params.setMargins(50, 10, 50, 10)
-
-            if (viewY < centerPoint) {
-                gravity = Gravity.BOTTOM  //Tooltip gravity
-                rootParams.addRule(RelativeLayout.BELOW, rootLinear.id)
-                rootParams.setMargins(50, 50, 50, 50)
-                skipButton.layoutParams = rootParams
-
-            } else {
-                gravity = Gravity.TOP  //Tooltip gravity
-                rootParams.addRule(RelativeLayout.BELOW, skipButton.id)
-                rootParams.setMargins(50, 50, 50, 0)
-                rootLinear.layoutParams = rootParams
-            }
-
-
-            // Rest of your code here
-            /*-------------Tooltip Start------------------------- */
-
-            val tooltip = withContext(Dispatchers.Default){
-                SimpleTooltip.Builder(context)
-                    .anchorView(anchorView)
-                    .gravity(gravity)
-                    .dismissOnOutsideTouch(false)
-                    .dismissOnInsideTouch(false)
-                    .modal(true)
-                    .setWidth(mViewGroup.width)
-                    .transparentOverlay(false)
-                    .highlightShape(OverlayView.HIGHLIGHT_SHAPE_RECTANGULAR)
-                    .cornerRadius(20f)
-                    .overlayOffset(5f)
-                    .contentView(binding.root, mTextId)
-                    .focusable(true)
-                    .build()
-            }
-            tooltip.show()
-
-            /*-------------Tooltip END------------------------- */
-            skipButton.setOnClickListener {
-                binding.root.visibility = View.GONE
-                if (tooltip.isShowing) {
-                    tooltip.dismiss()
-                }
-            }
-
-            closeButton.setOnClickListener {
-                tooltip.dismiss()
+            else{
                 if (index < popArray.size - 1) {
                     index++
                     when (popArray[index].dialogType) {
@@ -656,206 +867,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                     }
                 }
             }
-
-            val innerLayoutArray = identifierDesign.innerLayout
-
-            for (j in innerLayoutArray.indices) {
-
-                when (innerLayoutArray[j].type) {
-
-                    AppConstants.VIEWTYPE.LABEL -> {
-
-                        val title = AppCompatTextView(context)
-                        title.id = View.generateViewId()
-                        title.text = innerLayoutArray[j].title
-
-                        title.setTextSize(
-                            TypedValue.COMPLEX_UNIT_SP,
-                            innerLayoutArray[j].fontSize!!.toFloat()
-                        )
-                        applyFonts(context, title, innerLayoutArray[j])
-
-                        title.setTextColor(Color.parseColor(innerLayoutArray[j].textColor))
-
-                        val paramsText = LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.WRAP_CONTENT,
-                            LinearLayout.LayoutParams.WRAP_CONTENT
-                        )
-
-
-                        dynamicLayout.addView(title)
-
-                        if (innerLayoutArray[j].bottomMargin !== null) {
-                            paramsText.setMargins(
-                                20,
-                                10,
-                                20,
-                                innerLayoutArray[j].bottomMargin.toInt()
-                            )
-                        }
-                        if (innerLayoutArray[j].topMargin !== null) {
-                            paramsText.setMargins(
-                                20,
-                                innerLayoutArray[j].topMargin.toInt(),
-                                20,
-                                10
-                            )
-                        }
-
-                        when (innerLayoutArray[j].position) {
-
-                            "center" -> {
-                                title.gravity = Gravity.CENTER
-                                paramsText.gravity = Gravity.CENTER
-
-                            }
-                            "left" -> {
-                                title.gravity = Gravity.START
-                                paramsText.gravity = Gravity.START
-                            }
-                            "right" -> {
-                                title.gravity = Gravity.END
-                                paramsText.gravity = Gravity.END
-                            }
-                        }
-
-                        title.layoutParams = paramsText
-
-                    }
-
-                    AppConstants.VIEWTYPE.BUTTON -> {
-
-                        val button = AppCompatButton(context)
-                        button.id = View.generateViewId()
-                        button.isAllCaps = false
-                        button.text = innerLayoutArray[j].title
-                        button.setTextSize(
-                            TypedValue.COMPLEX_UNIT_SP,
-                            innerLayoutArray[j].fontSize.toFloat()
-                        )
-                        button.typeface = ResourcesCompat.getFont(context, R.font.opensans_regular)
-                        button.setTextColor(Color.parseColor(innerLayoutArray[j].textColor))
-
-                        applyFonts(context, button, innerLayoutArray[j])
-
-                        ViewCompat.setBackgroundTintList(
-                            button,
-                            ColorStateList.valueOf(Color.parseColor(innerLayoutArray[j].backgroundColor))
-                        )
-
-                        val radius = 70 //radius will be 5px
-                        val gradientDrawable = GradientDrawable()
-                        gradientDrawable.setColor(context.resources.getColor(R.color.orange))
-                        gradientDrawable.cornerRadius = radius.toFloat()
-                        button.background = gradientDrawable
-
-                        dynamicLayout.addView(button)
-
-                        button.minHeight = 0
-                        button.minimumHeight = 0
-
-                        button.height = context.dpToPx(innerLayoutArray[j].height.toInt() + 7)
-
-                        button.textAlignment = View.TEXT_ALIGNMENT_CENTER
-
-                        button.setPadding(1, 10, 1, 10)
-
-                        val params: LinearLayout.LayoutParams
-                        if (innerLayoutArray[j].width == "initial") {
-                            params = LinearLayout.LayoutParams(
-                                LinearLayout.LayoutParams.WRAP_CONTENT,
-                                LinearLayout.LayoutParams.WRAP_CONTENT
-                            )
-
-                        } else {
-
-                            params = LinearLayout.LayoutParams(
-                                LinearLayout.LayoutParams.MATCH_PARENT,
-                                LinearLayout.LayoutParams.WRAP_CONTENT
-                            )
-
-                        }
-                        when (innerLayoutArray[j].position) {
-
-                            "center" -> {
-                                params.gravity = Gravity.CENTER
-                                button.gravity = Gravity.CENTER
-                            }
-                            "left" -> {
-                                params.gravity = Gravity.START
-                                button.gravity = Gravity.CENTER_VERTICAL
-                            }
-                            "end" -> {
-                                params.gravity = Gravity.END
-                                button.gravity = Gravity.CENTER_VERTICAL
-                            }
-                        }
-                        button.layoutParams = params
-
-
-                        params.setMargins(
-                            0,
-                            innerLayoutArray[j].topMargin.toInt(),
-                            0,
-                            innerLayoutArray[j].bottomMargin.toInt()
-                        )
-
-                        button.layoutParams = params
-
-                        button.textAlignment = View.TEXT_ALIGNMENT_CENTER
-
-                        params.setMargins(
-                            0, context.dpToPx(innerLayoutArray[j].topMargin.toInt()), 0,
-                            context.dpToPx(innerLayoutArray[j].bottomMargin.toInt())
-                        )
-
-                        button.layoutParams = params
-
-                        button.setOnClickListener {
-                            tooltip.dismiss()
-                            if (index < popArray.size - 1) {
-                                index++
-                                when (popArray[index].dialogType) {
-                                    AppConstants.DIALOG_TYPE.popup -> {
-                                        createPopup(context, popArray[index])
-                                    }
-                                    AppConstants.DIALOG_TYPE.bottom -> {
-                                        createPopup(context, popArray[index])
-                                    }
-                                    else -> {
-
-                                        pingToolTip(context, popArray[index])
-                                    }
-                                }
-                            }
-                            if (innerLayoutArray[j].buttonUrl.isNotEmpty()) {
-                                Handler(Looper.myLooper()!!).postDelayed({
-
-                                    val URL_REGEX =
-                                        "^((https?|ftp)://|(www|ftp)\\.)?[a-z0-9-]+(\\.[a-z0-9-]+)+([/?].*)?$"
-                                    val p: Pattern = Pattern.compile(URL_REGEX)
-                                    val m: Matcher = p.matcher(innerLayoutArray[j].buttonUrl)
-                                    if (m.find()) {
-                                        val browserIntent =
-                                            Intent(
-                                                Intent.ACTION_VIEW,
-                                                Uri.parse(innerLayoutArray[j].buttonUrl)
-                                            )
-                                        context.startActivity(browserIntent)
-                                    }
-
-                                }, 500)
-                            }
-
-
-                        }
-
-                    }
-                }
-
-            }
         }
-
 
 
     }

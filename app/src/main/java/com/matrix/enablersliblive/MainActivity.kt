@@ -15,7 +15,7 @@ class MainActivity : AppCompatActivity() {
         AdopshunCreator.initAdopshun(this,viewGroup)
         AdopshunCreator.initLayout(R.layout.activity_main)
         runOnUiThread {
-            RenderPopup.showPopups(this,  R.layout.activity_main, R.id.tvTitle)
+            RenderPopup.showPopups(this,  R.layout.activity_main)
         }
     }
 }

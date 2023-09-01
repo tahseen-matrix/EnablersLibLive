@@ -46,8 +46,8 @@
         </LinearLayout>
 
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/skipBtn"
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/skipBtnForSkipAllPing"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
