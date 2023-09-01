@@ -543,8 +543,8 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
     ) {
 
         GlobalScope.launch(Dispatchers.Main) {
-            val binding = PingLayoutBinding.inflate(LayoutInflater.from(context))
             val mViewGroup = getRootViewGroup(context)
+            val binding = PingLayoutBinding.inflate(LayoutInflater.from(context))
             val outerLayout = identifierDesign.outerLayout
             val belongId = outerLayout.belongId
 
@@ -553,7 +553,8 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
             val rootLinear = binding.linearRoot
             val dynamicLayout = binding.dynamicLayout
             val closeButton = binding.btnCancel
-            val skipButton = binding.btnSkip
+            //  btnSkip
+            val skipButton = binding.skipBtn
 
             var counter2 = 100
             val arrayList = ArrayList<Int>()
