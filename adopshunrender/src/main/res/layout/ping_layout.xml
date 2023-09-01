@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/relativeRoot"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        >
+
+
+        <LinearLayout
+            android:id="@+id/linearRoot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/card_background"
+            android:orientation="vertical"
+            >
+
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/btnCancel"
+                android:layout_width="@dimen/_20sdp"
+                android:layout_height="@dimen/_20sdp"
+                android:layout_gravity="end"
+                android:drawablePadding="@dimen/_10sdp"
+                android:gravity="end"
+                android:layout_margin="@dimen/_3sdp"
+                android:background="@drawable/cancel"/>
+
+            <LinearLayout
+                android:id="@+id/dynamicLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="-30dp"
+                android:orientation="vertical"
+                android:layout_marginStart="@dimen/_3sdp"
+                android:layout_marginEnd="@dimen/_3sdp"
+                android:layout_marginBottom="@dimen/_3sdp"
+                android:paddingHorizontal="@dimen/_7sdp"
+                android:paddingVertical="@dimen/_7sdp"
+                >
+
+            </LinearLayout>
+
+
+        </LinearLayout>
+
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/btnSkip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_marginVertical="@dimen/_15sdp"
+            android:background="@drawable/skip_button_bg"
+            android:backgroundTint="@color/lightgrey"
+            android:fontFamily="@font/opensans_semibold"
+            android:paddingHorizontal="@dimen/_40sdp"
+            android:paddingVertical="@dimen/_7sdp"
+            android:text="SKIP"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:textSize="@dimen/_12ssp" />
+
+
+    </RelativeLayout>

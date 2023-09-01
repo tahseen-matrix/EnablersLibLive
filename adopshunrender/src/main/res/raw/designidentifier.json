@@ -1,0 +1,92 @@
+{
+  "identifier_design": [
+    {
+      "outer_layout": {
+        "position": "center",
+        "belong_id": "103",
+        "background_color": "white/haxcolor",
+        "height": "300",
+        "width": "300"
+      },
+      "inner_layout": [
+        {
+          "url": "www.imageyrl.com",
+          "background_color": "white/haxcolor",
+          "type": "image",
+          "y": "50",
+          "x": "100",
+          "width": "",
+          "height": ""
+        },
+        {
+          "y": "50",
+          "font_family": "HelveticaNeue",
+          "height": "",
+          "x": "100",
+          "title": "helloAdopshun",
+          "font_size": "20",
+          "type": "label",
+          "background_color": "white/haxcolor",
+          "width": "",
+          "foreground_color": "white/haxcolor"
+        },
+        {
+          "x": "100",
+          "font_family": "HelveticaNeue",
+          "height": "",
+          "type": "button",
+          "foreground_color": "white/haxcolor",
+          "y": "50",
+          "title": "helloAdopshun",
+          "background_color": "white/haxcolor",
+          "width": "",
+          "font_size": "20"
+        }
+      ]
+    },
+    {
+      "outer_layout": {
+        "height": "300",
+        "belong_id": "103",
+        "background_color": "white/haxcolor",
+        "width": "300",
+        "position": "center"
+      },
+      "inner_layout": [
+        {
+          "url": "www.imageyrl.com",
+          "y": "50",
+          "type": "image",
+          "height": "",
+          "width": "",
+          "background_color": "white/haxcolor",
+          "x": "100"
+        },
+        {
+          "width": "",
+          "x": "100",
+          "font_family": "HelveticaNeue",
+          "type": "label",
+          "height": "",
+          "foreground_color": "white/haxcolor",
+          "title": "helloAdopshun",
+          "y": "50",
+          "font_size": "20",
+          "background_color": "white/haxcolor"
+        },
+        {
+          "y": "50",
+          "type": "button",
+          "height": "",
+          "font_size": "20",
+          "x": "100",
+          "font_family": "HelveticaNeue",
+          "background_color": "white/haxcolor",
+          "width": "",
+          "foreground_color": "white/haxcolor",
+          "title": "helloAdopshun"
+        }
+      ]
+    }
+  ]
+}

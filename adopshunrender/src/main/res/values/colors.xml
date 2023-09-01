@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FF5722</color>
+    <color name="purple_500">#FF5722</color>
+    <color name="purple_700">#000000</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <color name="colorPrimary">#278be3</color>
+    <color name="colorPrimaryDark">#0f5998</color>
+    <color name="colorAccent">#4075a2</color>
+    <color name="colorNavIcon">#dae9f6</color>
+    <color name="colorNavText">#01294b</color>
+    <color name="grey">#919191</color>
+    <color name="lightgrey">#D8D8D8</color>
+
+
+    <color name="red">#F30000</color>
+    <color name="green">#0A810F</color>
+    <color name="yellow">#E3AB05</color>
+    <color name="orange">#FF5722</color>
+
+    <color name="simpletooltip_background">@color/white</color>
+    <color name="simpletooltip_text">@android:color/primary_text_light</color>
+    <color name="simpletooltip_arrow">@color/white</color>
+
+
+</resources>

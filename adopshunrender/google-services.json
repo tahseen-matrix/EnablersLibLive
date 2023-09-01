@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "635423919529",
+    "project_id": "adopshunapps",
+    "storage_bucket": "adopshunapps.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:635423919529:android:9d687315a044024ea488b8",
+        "android_client_info": {
+          "package_name": "com.adopshun.render"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "635423919529-fcqgn09tr624hb6rmo3brgurimmlrcmk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyALbT7QQI6Aothp5yjePVdrhLjyvNbLbL0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "635423919529-fcqgn09tr624hb6rmo3brgurimmlrcmk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

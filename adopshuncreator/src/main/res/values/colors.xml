@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FF000000</color>
+    <color name="purple_500">#FF000000</color>
+    <color name="purple_700">#FF000000</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="transparent">#00000000</color>
+    <color name="blacktransparent">#D8000000</color>
+    <color name="floatingcolor">#30E5A9</color>
+
+    <color name="quickie_gray">#dadce0</color>
+    <color name="quickie_white">#ffffff</color>
+    <color name="quickie_transparent">#00000000</color>
+    <color name="quickie_accent_fallback">#03dac5</color>
+
+
+</resources>
