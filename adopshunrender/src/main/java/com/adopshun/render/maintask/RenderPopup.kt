@@ -63,13 +63,14 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
     var alertDialog: AlertDialog? = null
     var index = 0
     var mLayout = 0
+    var mTextId=0
     var mContext: AppCompatActivity? = null
     var popArray: ArrayList<RenderModel.IdentifierDesign> = ArrayList()
     var sessionManager: PreferencesManager? = null
     private lateinit var appDb: AppDatabase
 
     @SuppressLint("InvalidAnalyticsName")
-    fun checkFirstRun(context: AppCompatActivity, layout: Int) {
+    fun checkFirstRun(context: AppCompatActivity, layout: Int, textViewId:Int) {
         val builder = AlertDialog.Builder(context)
         builder.setMessage("Do you want to show onboarding?")
         builder.setTitle("Adopshun")
@@ -81,6 +82,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                 ?.putBoolean(AppConstants.IS_FIRST_RUN, true)?.apply()
             mLayout = layout
             mContext = context
+            mTextId = textViewId
             appDb = AppDatabase.getDatabase(context)
             GlobalScope.launch(Dispatchers.IO) {
                 appDb.stepDao().clearStep()
@@ -107,21 +109,22 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
 
 
 
-    fun showPopups(context: AppCompatActivity, layout: Int) {
 
+    fun showPopups(context: AppCompatActivity, layout: Int, textViewId:Int) {
         PreferencesManager.initializeInstance(context = context)
         sessionManager = PreferencesManager.instance
         context.startService(Intent(context, OnClearFromRecentService::class.java))
         if (context.getSharedPreferences("renderFirstPop", MODE_PRIVATE)
                 ?.getBoolean(AppConstants.IS_FIRST_RUN, false) == false
         ) {
-            checkFirstRun(context, layout)
+            checkFirstRun(context, layout, textViewId)
         }
         if (context.getSharedPreferences("renderFirstPop", MODE_PRIVATE)
                 ?.getBoolean(AppConstants.IS_POP_STATUS, false) == true
         ) {
             mLayout = layout
             mContext = context
+            mTextId = textViewId
             appDb = AppDatabase.getDatabase(context)
             Handler(Looper.myLooper()!!).postDelayed({
                 index = 0
@@ -605,7 +608,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                 rootLinear.layoutParams = rootParams
             }
 
-            val textViewId = skipButton.id
+
             // Rest of your code here
             /*-------------Tooltip Start------------------------- */
 
@@ -621,7 +624,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                     .highlightShape(OverlayView.HIGHLIGHT_SHAPE_RECTANGULAR)
                     .cornerRadius(20f)
                     .overlayOffset(5f)
-                    .contentView(binding.root, textViewId)
+                    .contentView(binding.root, mTextId)
                     .focusable(true)
                     .build()
             }
