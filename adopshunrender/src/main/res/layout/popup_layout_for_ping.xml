@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/layout/popup_layout.xml -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/popup_arrow"> <!-- Set the background to the custom background -->
+
+    <!-- Arrow shape (triangle pointing upwards) -->
+    <View
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/custom_popup_arrow" /> <!-- Set the arrow background here -->
+
+    <!-- Your UI elements go here -->
+    <!-- Example: TextView, Button, etc. -->
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="This is a custom popup."
+        android:textSize="18sp"
+        android:textColor="#000000"/>
+</LinearLayout>

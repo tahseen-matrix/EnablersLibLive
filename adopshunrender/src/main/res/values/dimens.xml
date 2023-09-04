@@ -12,5 +12,5 @@
     <dimen name="simpletooltip_arrow_width">30dp</dimen>
     <dimen name="simpletooltip_arrow_height">15dp</dimen>
     <dimen name="simpletooltip_animation_padding">4dp</dimen>
-
+    <dimen name="tooltip_offset">8dp</dimen>
 </resources>

@@ -11,4 +11,16 @@
     <style name="simpletooltip_default" parent="@android:style/TextAppearance.Medium"/>
 
 
+    <style name="MyDialogStyle" parent="Theme.AppCompat.Dialog">
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowMinWidthMajor">100%</item>
+        <item name="android:windowMinWidthMinor">100%</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+
+    <style name="TooltipPopupAnimation">
+        <item name="android:windowEnterAnimation">@anim/tooltip_popup_enter</item>
+        <item name="android:windowExitAnimation">@anim/tooltip_popup_exit</item>
+    </style>
 </resources>

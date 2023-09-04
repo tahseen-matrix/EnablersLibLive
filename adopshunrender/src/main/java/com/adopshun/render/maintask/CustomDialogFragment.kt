@@ -3,32 +3,63 @@ package com.adopshun.render.maintask
 /**
  * Created By Matrix Marketers
  */
+import android.annotation.SuppressLint
+import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.Color
+import android.graphics.Rect
+import android.graphics.drawable.GradientDrawable
+import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.RelativeLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.AppCompatButton
+import androidx.appcompat.widget.AppCompatImageView
+import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.ViewCompat
 import androidx.fragment.app.DialogFragment
 import com.adopshun.render.R
+import com.adopshun.render.maintask.Extensions.dpToPx
+import com.adopshun.render.maintask.Extensions.getAllChildrenViews
+import com.adopshun.render.maintask.Extensions.loadGifImage
+import com.adopshun.render.maintask.Extensions.loadImage
+import com.adopshun.render.maintask.Extensions.pxToDp
+import com.adopshun.render.maintask.RenderPopup.index
+import com.adopshun.render.maintask.RenderPopup.pingToolTip
+import com.adopshun.render.maintask.RenderPopup.popArray
 import com.adopshun.render.model.RenderModel
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 class CustomDialogFragment(
     private val identifierDesign: RenderModel.IdentifierDesign,
     val context: AppCompatActivity
 ) : DialogFragment() {
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setStyle(STYLE_NORMAL, R.style.MyDialogStyle)
+    }
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val dialogView = inflater.inflate(R.layout.popup_layout, container, false)
+        val dialogView = inflater.inflate(R.layout.popup_layout_bottom, container, false)
 
 
-      //  populateDialogView(dialogView)
+        populateDialogView(dialogView)
         return dialogView
     }
-/*
+
     @SuppressLint("Range")
     private fun populateDialogView(dialogView: View) {
         // Populate dialog views using the identifierDesign data
@@ -57,8 +88,12 @@ class CustomDialogFragment(
         rootRelative.gravity = gravity
 
         val viewsList = dialogView.getAllChildrenViews()
-
-        var counter2 = 100
+        val answerLayoutParams = RelativeLayout.LayoutParams(
+            RelativeLayout.LayoutParams.WRAP_CONTENT,
+            RelativeLayout.LayoutParams.WRAP_CONTENT
+        )
+        rootLinear.layoutParams = answerLayoutParams
+       /* var counter2 = 100
         val arrayList = ArrayList<Int>()
         for (i in 0 until viewsList.size) {
             viewsList[i].id = counter2
@@ -106,7 +141,7 @@ class CustomDialogFragment(
             answerLayoutParams.setMargins(0, 50, 0, 0)
             rootLinear.layoutParams = answerLayoutParams
         }
-
+*/
         for (innerLayout in innerLayoutArray) {
             when (innerLayout.type) {
                 AppConstants.VIEWTYPE.IMAGE -> {
@@ -286,18 +321,15 @@ class CustomDialogFragment(
                     button.layoutParams = params
 
                     button.setOnClickListener {
-                        *//* val bundle = Bundle()
-                         bundle.putString(FirebaseAnalytics.Param.METHOD, "POP UP CLICK")
-                         firebaseAnalytics!!.logEvent(FirebaseAnalytics.Event.AD_IMPRESSION, bundle)*//*
                         dialogView.visibility = View.GONE
                         dismiss()
-                        if (RenderPopup.index < RenderPopup.popArray.size - 1) {
-                            RenderPopup.index++
-                            when (RenderPopup.popArray[RenderPopup.index].dialogType) {
+                        if (index < popArray.size - 1) {
+                            index++
+                            when (popArray[index].dialogType) {
                                 AppConstants.DIALOG_TYPE.popup -> {
                                     dismiss()
                                     val identifierDesign: RenderModel.IdentifierDesign =
-                                        RenderPopup.popArray[RenderPopup.index] // Your identifier design data
+                                        popArray[index] // Your identifier design data
                                     val dialogFragment = CustomDialogFragment(
                                         identifierDesign,
                                         RenderPopup.mContext!!
@@ -311,7 +343,7 @@ class CustomDialogFragment(
                                     // When you want to show the dialog
                                     dismiss()
                                     val identifierDesign: RenderModel.IdentifierDesign =
-                                        RenderPopup.popArray[RenderPopup.index] // Your identifier design data
+                                        popArray[index] // Your identifier design data
                                     val dialogFragment = CustomDialogFragment(
                                         identifierDesign,
                                         RenderPopup.mContext!!
@@ -322,9 +354,10 @@ class CustomDialogFragment(
                                     )
                                 }
                                 else -> {
+                                    dismiss()
                                     RenderPopup.pingToolTip(
                                         context,
-                                        RenderPopup.popArray[RenderPopup.index]
+                                        popArray[index]
                                     )
                                 }
                             }
@@ -351,5 +384,47 @@ class CustomDialogFragment(
                 }
             }
         }
-    }*/
+
+        closeButton.setOnClickListener {
+            if (index < popArray.size - 1) {
+                index++
+
+                when (popArray[index].dialogType) {
+                    AppConstants.DIALOG_TYPE.popup -> {
+                        dismiss()
+                        val identifierDesign: RenderModel.IdentifierDesign =
+                            popArray[index] // Your identifier design data
+                        val dialogFragment = CustomDialogFragment(
+                            identifierDesign,
+                            RenderPopup.mContext!!
+                        )
+                        dialogFragment.show(
+                            RenderPopup.mContext?.supportFragmentManager!!,
+                            "custom_dialog"
+                        )
+                    }
+                    AppConstants.DIALOG_TYPE.bottom -> {
+                        dismiss()
+                        val identifierDesign: RenderModel.IdentifierDesign =
+                            popArray[index] // Your identifier design data
+                        val dialogFragment = CustomDialogFragment(
+                            identifierDesign,
+                            RenderPopup.mContext!!
+                        )
+                        dialogFragment.show(
+                            RenderPopup.mContext?.supportFragmentManager!!,
+                            "custom_dialog"
+                        )
+                    }
+                    else -> {
+                        dismiss()
+                        pingToolTip(context, popArray[index])
+                    }
+                }
+            }
+        }
+        skipButton.setOnClickListener {
+            dismiss()
+        }
+    }
 }
