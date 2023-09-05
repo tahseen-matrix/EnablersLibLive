@@ -36,8 +36,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
-        mAdapter = RecyclerAdapter(list.toMutableList())
-        mAdapter1 = RecyclerAdapter(list1.toMutableList())
+        mAdapter = RecyclerAdapter(list.toMutableList(), this)
+        mAdapter1 = RecyclerAdapter(list1.toMutableList(), this)
         binding.rvImagae.adapter = mAdapter
         binding.rvImagae2.adapter = mAdapter1
 

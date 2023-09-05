@@ -169,7 +169,7 @@ class CustomDialogFragment(
                     val title = AppCompatTextView(context)
                     title.id = View.generateViewId()
                     title.text = innerLayout.title
-                    title.textSize = innerLayout.fontSize!!.toFloat()
+                    title.textSize = innerLayout.fontSize.toFloat()
 
                     RenderPopup.applyFonts(context, title, innerLayout)
 
@@ -224,7 +224,7 @@ class CustomDialogFragment(
                     button.id = View.generateViewId()
                     button.isAllCaps = false
                     button.text = innerLayout.title
-                    button.textSize = innerLayout.fontSize!!.toFloat()
+                    button.textSize = innerLayout.fontSize.toFloat()
 
                     button.typeface = ResourcesCompat.getFont(context, R.font.opensans_regular)
                     button.setTextColor(Color.parseColor(innerLayout.textColor))
