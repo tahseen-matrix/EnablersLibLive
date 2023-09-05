@@ -19,8 +19,4 @@
         <item name="android:windowNoTitle">true</item>
     </style>
 
-    <style name="TooltipPopupAnimation">
-        <item name="android:windowEnterAnimation">@anim/tooltip_popup_enter</item>
-        <item name="android:windowExitAnimation">@anim/tooltip_popup_exit</item>
-    </style>
 </resources>
