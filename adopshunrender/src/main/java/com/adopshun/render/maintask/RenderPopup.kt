@@ -156,16 +156,18 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
 
         when (popArray[index].dialogType) {
             AppConstants.DIALOG_TYPE.popup -> {
-                val identifierDesign: RenderModel.IdentifierDesign = popArray[index]// Your identifier design data
+                val identifierDesign: RenderModel.IdentifierDesign =
+                    popArray[index]// Your identifier design data
                 val dialogFragment = CustomDialogFragment(identifierDesign, context)
                 dialogFragment.show(context.supportFragmentManager, "custom_dialog")
-              //  createPopup(context, popArray[index])
+                //  createPopup(context, popArray[index])
             }
             AppConstants.DIALOG_TYPE.bottom -> {
-                val identifierDesign: RenderModel.IdentifierDesign = popArray[index]// Your identifier design data
+                val identifierDesign: RenderModel.IdentifierDesign =
+                    popArray[index]// Your identifier design data
                 val dialogFragment = CustomDialogFragment(identifierDesign, context)
                 dialogFragment.show(context.supportFragmentManager, "custom_dialog")
-               // createPopup(context, popArray[index])
+                // createPopup(context, popArray[index])
             }
             else -> {
                 pingToolTip(context, popArray[index])
@@ -525,12 +527,9 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
 
     }*/
 
-    private fun getRootViewGroup(context: AppCompatActivity): ViewGroup {
+    internal fun getRootViewGroup(context: AppCompatActivity): ViewGroup {
         return (context.findViewById<View>(android.R.id.content) as ViewGroup).getChildAt(0) as ViewGroup
     }
-
-
-
 
 
     @SuppressLint("Range")
@@ -538,18 +537,13 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
         context: AppCompatActivity,
         identifierDesign: RenderModel.IdentifierDesign
     ) {
-
         try {
             GlobalScope.launch(Dispatchers.Main) {
                 val mViewGroup = getRootViewGroup(context)
-                val binding = PopupLayoutBinding.inflate(LayoutInflater.from(context))
-                val outerLayout = identifierDesign.outerLayout
-                val belongId = outerLayout.belongId
-                val viewsList = mViewGroup.getAllChildrenViews()
-
                 // Keep track of the original state of mViewGroup
                 val originalLayoutParams = mViewGroup.layoutParams
-                val originalGravity = (mViewGroup.layoutParams as? FrameLayout.LayoutParams)?.gravity
+                val originalGravity =
+                    (mViewGroup.layoutParams as? FrameLayout.LayoutParams)?.gravity
 
                 // Modify the mViewGroup layout parameters when creating the popup
                 val popupLayoutParams = FrameLayout.LayoutParams(
@@ -558,11 +552,17 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                 )
                 mViewGroup.layoutParams = popupLayoutParams
 
+                val binding = PopupLayoutBinding.inflate(LayoutInflater.from(context))
+                val outerLayout = identifierDesign.outerLayout
+                val belongId = outerLayout.belongId
+
+                val viewsList = mViewGroup.getAllChildrenViews()
+
                 val rootLinear = binding.linearRoot
                 val dynamicLayout = binding.dynamicLayout
                 val closeButton = binding.btnCancel
                 //  btnSkip
-                val  skipButton = binding.btnSkip
+                val skipButton = binding.btnSkip
 
                 var counter2 = 100
                 val arrayList = ArrayList<Int>()
@@ -572,10 +572,11 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                     counter2++
                 }
 
-                var anchorView = View(context)
+                var anchorView: View? = null
                 for (i in 0 until viewsList.size) {
                     if (viewsList[i].id.toString() == belongId) {
                         anchorView = viewsList[i]
+                        break
                     }
                 }
 
@@ -585,11 +586,11 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                 )
 
                 val rectf = Rect()
-                anchorView.getLocalVisibleRect(rectf)
-                anchorView.getGlobalVisibleRect(rectf)
+                anchorView?.getLocalVisibleRect(rectf)
+                anchorView?.getGlobalVisibleRect(rectf)
 
                 val offsetViewBounds = Rect()
-                anchorView.getDrawingRect(offsetViewBounds)
+                anchorView?.getDrawingRect(offsetViewBounds)
                 mViewGroup.offsetDescendantRectToMyCoords(anchorView, offsetViewBounds)
 
                 val relativeTop = offsetViewBounds.top
@@ -639,50 +640,62 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
 
                 /*-------------Tooltip END------------------------- */
                 skipButton.setOnClickListener {
-                    mViewGroup.layoutParams = originalLayoutParams
-                    if (originalLayoutParams is FrameLayout.LayoutParams && originalGravity != null) {
-                        originalLayoutParams.gravity = originalGravity
-                    }
-                    binding.root.visibility = View.GONE
-                    if (tooltip.isShowing) {
-                        tooltip.dismiss()
-                    }
+                    resetLayoutAndDismissTooltip(
+                        mViewGroup,
+                        binding.root,
+                        originalLayoutParams,
+                        originalGravity,
+                        tooltip
+                    )
                 }
 
                 closeButton.setOnClickListener {
-                    mViewGroup.layoutParams = originalLayoutParams
-                    if (originalLayoutParams is FrameLayout.LayoutParams && originalGravity != null) {
-                        originalLayoutParams.gravity = originalGravity
-                    }
-                    tooltip.dismiss()
+                    resetLayoutAndDismissTooltip(
+                        mViewGroup,
+                        binding.root,
+                        originalLayoutParams,
+                        originalGravity,
+                        tooltip
+                    )
                     if (index < popArray.size - 1) {
                         index++
                         when (popArray[index].dialogType) {
                             AppConstants.DIALOG_TYPE.popup -> {
-                                mViewGroup.layoutParams = originalLayoutParams
-                                if (originalLayoutParams is FrameLayout.LayoutParams && originalGravity != null) {
-                                    originalLayoutParams.gravity = originalGravity
-                                }
-                                val identifierDesign: RenderModel.IdentifierDesign = popArray[index]// Your identifier design data
+                                resetLayoutAndDismissTooltip(
+                                    mViewGroup,
+                                    binding.root,
+                                    originalLayoutParams,
+                                    originalGravity,
+                                    tooltip
+                                )
+                                val identifierDesign: RenderModel.IdentifierDesign =
+                                    popArray[index]// Your identifier design data
                                 val dialogFragment = CustomDialogFragment(identifierDesign, context)
                                 dialogFragment.show(context.supportFragmentManager, "custom_dialog")
                                 // createPopup(context, popArray[index])
                             }
                             AppConstants.DIALOG_TYPE.bottom -> {
-                                mViewGroup.layoutParams = originalLayoutParams
-                                if (originalLayoutParams is FrameLayout.LayoutParams && originalGravity != null) {
-                                    originalLayoutParams.gravity = originalGravity
-                                }
-                                val identifierDesign: RenderModel.IdentifierDesign = popArray[index]// Your identifier design data
+                                resetLayoutAndDismissTooltip(
+                                    mViewGroup,
+                                    binding.root,
+                                    originalLayoutParams,
+                                    originalGravity,
+                                    tooltip
+                                )
+                                val identifierDesign: RenderModel.IdentifierDesign =
+                                    popArray[index]// Your identifier design data
                                 val dialogFragment = CustomDialogFragment(identifierDesign, context)
                                 dialogFragment.show(context.supportFragmentManager, "custom_dialog")
                                 //createPopup(context, popArray[index])
                             }
                             else -> {
-                                mViewGroup.layoutParams = originalLayoutParams
-                                if (originalLayoutParams is FrameLayout.LayoutParams && originalGravity != null) {
-                                    originalLayoutParams.gravity = originalGravity
-                                }
+                                resetLayoutAndDismissTooltip(
+                                    mViewGroup,
+                                    binding.root,
+                                    originalLayoutParams,
+                                    originalGravity,
+                                    tooltip
+                                )
                                 pingToolTip(context, popArray[index])
                             }
                         }
@@ -845,39 +858,60 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                             button.layoutParams = params
 
                             button.setOnClickListener {
-                                mViewGroup.layoutParams = originalLayoutParams
-                                if (originalLayoutParams is FrameLayout.LayoutParams && originalGravity != null) {
-                                    originalLayoutParams.gravity = originalGravity
-                                }
-                                tooltip.dismiss()
+                                resetLayoutAndDismissTooltip(
+                                    mViewGroup,
+                                    binding.root,
+                                    originalLayoutParams,
+                                    originalGravity,
+                                    tooltip
+                                )
                                 if (index < popArray.size - 1) {
                                     index++
                                     when (popArray[index].dialogType) {
                                         AppConstants.DIALOG_TYPE.popup -> {
-                                            mViewGroup.layoutParams = originalLayoutParams
-                                            if (originalLayoutParams is FrameLayout.LayoutParams && originalGravity != null) {
-                                                originalLayoutParams.gravity = originalGravity
-                                            }
-                                            val identifierDesign: RenderModel.IdentifierDesign = popArray[index]// Your identifier design data
-                                            val dialogFragment = CustomDialogFragment(identifierDesign, context)
-                                            dialogFragment.show(context.supportFragmentManager, "custom_dialog")
+                                            resetLayoutAndDismissTooltip(
+                                                mViewGroup,
+                                                binding.root,
+                                                originalLayoutParams,
+                                                originalGravity,
+                                                tooltip
+                                            )
+                                            val identifierDesign: RenderModel.IdentifierDesign =
+                                                popArray[index]// Your identifier design data
+                                            val dialogFragment =
+                                                CustomDialogFragment(identifierDesign, context)
+                                            dialogFragment.show(
+                                                context.supportFragmentManager,
+                                                "custom_dialog"
+                                            )
                                             //  createPopup(context, popArray[index])
                                         }
                                         AppConstants.DIALOG_TYPE.bottom -> {
-                                            mViewGroup.layoutParams = originalLayoutParams
-                                            if (originalLayoutParams is FrameLayout.LayoutParams && originalGravity != null) {
-                                                originalLayoutParams.gravity = originalGravity
-                                            }
-                                            val identifierDesign: RenderModel.IdentifierDesign = popArray[index]// Your identifier design data
-                                            val dialogFragment = CustomDialogFragment(identifierDesign, context)
-                                            dialogFragment.show(context.supportFragmentManager, "custom_dialog")
+                                            resetLayoutAndDismissTooltip(
+                                                mViewGroup,
+                                                binding.root,
+                                                originalLayoutParams,
+                                                originalGravity,
+                                                tooltip
+                                            )
+                                            val identifierDesign: RenderModel.IdentifierDesign =
+                                                popArray[index]// Your identifier design data
+                                            val dialogFragment =
+                                                CustomDialogFragment(identifierDesign, context)
+                                            dialogFragment.show(
+                                                context.supportFragmentManager,
+                                                "custom_dialog"
+                                            )
                                             //createPopup(context, popArray[index])
                                         }
                                         else -> {
-                                            mViewGroup.layoutParams = originalLayoutParams
-                                            if (originalLayoutParams is FrameLayout.LayoutParams && originalGravity != null) {
-                                                originalLayoutParams.gravity = originalGravity
-                                            }
+                                            resetLayoutAndDismissTooltip(
+                                                mViewGroup,
+                                                binding.root,
+                                                originalLayoutParams,
+                                                originalGravity,
+                                                tooltip
+                                            )
                                             pingToolTip(context, popArray[index])
                                         }
                                     }
@@ -908,11 +942,34 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
 
                 }
             }
-        }catch (Ex:Exception){
+        } catch (Ex: Exception) {
 
         }
     }
 
+
+    private fun resetLayoutAndDismissTooltip(
+        mViewGroup: ViewGroup,
+        tooltipContent: View,
+        originalLayoutParams: ViewGroup.LayoutParams?,
+        originalGravity: Int?,
+        tooltip: SimpleTooltip
+    ) {
+        // Restore the original layout parameters
+        originalLayoutParams?.let {
+            mViewGroup.layoutParams = it
+            if (it is FrameLayout.LayoutParams && originalGravity != null) {
+                it.gravity = originalGravity
+            }
+        }
+        // Switch to the main thread to hide the tooltip and update UI elements
+        GlobalScope.launch(Dispatchers.Main) {
+            tooltipContent.visibility = View.GONE
+            if (tooltip.isShowing) {
+                tooltip.dismiss()
+            }
+        }
+    }
 
     private fun createAlertDialog(
         dialogView: PopupLayoutBinding, context: AppCompatActivity,
