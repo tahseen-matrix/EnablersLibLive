@@ -31,15 +31,16 @@ import com.adopshun.render.maintask.Extensions.dpToPx
 import com.adopshun.render.maintask.Extensions.loadGifImage
 import com.adopshun.render.maintask.Extensions.loadImage
 import com.adopshun.render.maintask.RenderPopup.index
-import com.adopshun.render.maintask.RenderPopup.pingToolTip
 import com.adopshun.render.maintask.RenderPopup.popArray
+import com.adopshun.render.maintask.RenderPopup.showToolTip
 import com.adopshun.render.model.RenderModel
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 class CustomDialogFragment(
     private val identifierDesign: RenderModel.IdentifierDesign,
-    val context: AppCompatActivity
+    val context: AppCompatActivity, private val originalLayoutParams: ViewGroup.LayoutParams?,
+    private val  originalGravity: Int?, private val mViewGroup:ViewGroup
 ) : DialogFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,7 +53,7 @@ class CustomDialogFragment(
         savedInstanceState: Bundle?
     ): View? {
         val dialogView = inflater.inflate(R.layout.popup_layout_bottom, container, false)
-        populateDialogView(dialogView)
+        populateDialogView(dialogView, originalLayoutParams, originalGravity, mViewGroup)
         return dialogView
     }
 
@@ -67,7 +68,8 @@ class CustomDialogFragment(
         }
     }
     @SuppressLint("Range")
-    private fun populateDialogView(dialogView: View) {
+    private fun populateDialogView(dialogView: View, originalLayoutParams: ViewGroup.LayoutParams?,
+                                   originalGravity: Int?, mViewGroup: ViewGroup) {
         // Populate dialog views using the identifierDesign data
         val innerLayoutArray = identifierDesign.innerLayout
         val outerLayout = identifierDesign.outerLayout
@@ -75,20 +77,6 @@ class CustomDialogFragment(
         val rootRelative = dialogView.findViewById<RelativeLayout>(R.id.relativeRoot)
         val skipButton = dialogView.findViewById<AppCompatTextView>(R.id.btnSkip)
         val closeButton = dialogView.findViewById<AppCompatImageView>(R.id.btnCancel)
-
-
-        val mViewGroup = RenderPopup.getRootViewGroup(context)
-        // Keep track of the original state of mViewGroup
-        val originalLayoutParams = mViewGroup.layoutParams
-        val originalGravity =
-            (mViewGroup.layoutParams as? FrameLayout.LayoutParams)?.gravity
-
-        // Modify the mViewGroup layout parameters when creating the popup
-        val popupLayoutParams = FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT,
-            FrameLayout.LayoutParams.MATCH_PARENT
-        )
-        mViewGroup.layoutParams = popupLayoutParams
 
         val gravity = when (outerLayout.position) {
             "center" -> {
@@ -303,7 +291,7 @@ class CustomDialogFragment(
                                     val dialogFragment = CustomDialogFragment(
                                         identifierDesign,
                                         RenderPopup.mContext!!
-                                    )
+                                    , originalLayoutParams, originalGravity, mViewGroup)
                                     dialogFragment.show(
                                         RenderPopup.mContext?.supportFragmentManager!!,
                                         "custom_dialog"
@@ -317,7 +305,7 @@ class CustomDialogFragment(
                                     val dialogFragment = CustomDialogFragment(
                                         identifierDesign,
                                         RenderPopup.mContext!!
-                                    )
+                                    ,originalLayoutParams, originalGravity, mViewGroup)
                                     dialogFragment.show(
                                         RenderPopup.mContext?.supportFragmentManager!!,
                                         "custom_dialog"
@@ -325,9 +313,9 @@ class CustomDialogFragment(
                                 }
                                 else -> {
                                     dismiss()
-                                    pingToolTip(
+                                    showToolTip(
                                         context,
-                                        popArray[index]
+                                        popArray[index], originalLayoutParams, originalGravity, mViewGroup
                                     )
                                 }
                             }
@@ -369,7 +357,7 @@ class CustomDialogFragment(
                             popArray[index] // Your identifier design data
                         val dialogFragment = CustomDialogFragment(
                             identifierDesign,
-                            RenderPopup.mContext!!
+                            RenderPopup.mContext!!, originalLayoutParams, originalGravity, mViewGroup
                         )
                         dialogFragment.show(
                             RenderPopup.mContext?.supportFragmentManager!!,
@@ -382,7 +370,7 @@ class CustomDialogFragment(
                             popArray[index] // Your identifier design data
                         val dialogFragment = CustomDialogFragment(
                             identifierDesign,
-                            RenderPopup.mContext!!
+                            RenderPopup.mContext!!, originalLayoutParams, originalGravity, mViewGroup
                         )
                         dialogFragment.show(
                             RenderPopup.mContext?.supportFragmentManager!!,
@@ -391,7 +379,7 @@ class CustomDialogFragment(
                     }
                     else -> {
                         dismiss()
-                        pingToolTip(context, popArray[index])
+                        showToolTip(context, popArray[index], originalLayoutParams, originalGravity, mViewGroup)
                     }
                 }
             }

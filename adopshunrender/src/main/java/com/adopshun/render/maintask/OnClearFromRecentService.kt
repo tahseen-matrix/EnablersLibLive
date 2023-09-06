@@ -23,10 +23,6 @@ class OnClearFromRecentService : Service() {
     override fun onTaskRemoved(rootIntent: Intent) {
         Log.e("ClearFromRecentService", "END")
         //Code here
-        RenderPopup.closeAlertDialog()
-        if (RenderPopup.sessionManager?.getBooleanValue(AppConstants.IS_POPPED_UP)==true){
-            RenderPopup.sessionManager?.setBoolean(AppConstants.IS_COMPLETED,true)
-        }
         stopSelf()
     }
 }

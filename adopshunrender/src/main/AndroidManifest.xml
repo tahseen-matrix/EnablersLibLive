@@ -12,7 +12,6 @@
             android:name="com.google.mlkit.vision.DEPENDENCIES"
             android:value="barcode" />
 
-        <service android:name=".maintask.OnClearFromRecentService" android:stopWithTask="false" />
 
 
     </application>

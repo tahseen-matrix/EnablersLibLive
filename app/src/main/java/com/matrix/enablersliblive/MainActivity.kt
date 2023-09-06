@@ -1,17 +1,24 @@
 package com.matrix.enablersliblive
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import com.adopshun.creator.maincreator.AdopshunCreator
+import com.adopshun.creator.utils.Extensions.log
+import com.adopshun.creator.utils.Extensions.toast
 import com.adopshun.render.maintask.RenderPopup
+import com.google.android.material.navigation.NavigationBarView
 import com.matrix.enablersliblive.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
     private val binding: ActivityMainBinding by lazy {
         ActivityMainBinding.inflate(layoutInflater)
     }
+
     private var mAdapter: RecyclerAdapter? = null
     private var mAdapter1: RecyclerAdapter? = null
     val list = listOf(
@@ -46,6 +53,20 @@ class MainActivity : AppCompatActivity() {
         AdopshunCreator.initLayout(R.layout.activity_main)
         runOnUiThread {
             RenderPopup.showPopups(this,  R.layout.activity_main)
+        }
+
+        binding.navigation.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.navigation_home -> {
+                    Toast.makeText(this@MainActivity, "Home", Toast.LENGTH_SHORT).show()
+                    true
+                }
+                R.id.navigation_dashboard -> {
+                    Toast.makeText(this@MainActivity, "Dashboard", Toast.LENGTH_SHORT).show()
+                    false
+                }
+                else -> false
+            }
         }
     }
 
