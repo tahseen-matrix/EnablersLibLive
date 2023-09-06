@@ -56,16 +56,9 @@ class CustomDialogFragment(
         populateDialogView(dialogView, originalLayoutParams, originalGravity, mViewGroup)
         return dialogView
     }
-
-    private fun resetLayoutAndDismissDialog(
-        mViewGroup: ViewGroup,
-        originalLayoutParams: ViewGroup.LayoutParams?,
-        originalGravity: Int?
-    ) {
-        mViewGroup.layoutParams = originalLayoutParams
-        if (originalLayoutParams is FrameLayout.LayoutParams && originalGravity != null) {
-            originalLayoutParams.gravity = originalGravity
-        }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        dialog?.setCancelable(false)
     }
     @SuppressLint("Range")
     private fun populateDialogView(dialogView: View, originalLayoutParams: ViewGroup.LayoutParams?,
@@ -344,11 +337,6 @@ class CustomDialogFragment(
         }
 
         closeButton.setOnClickListener {
-            resetLayoutAndDismissDialog(
-                mViewGroup,
-                originalLayoutParams,
-                originalGravity
-            )
             if (index < popArray.size - 1) {
                 index++
                 when (popArray[index].dialogType) {
@@ -384,20 +372,10 @@ class CustomDialogFragment(
                 }
             }
             else{
-                resetLayoutAndDismissDialog(
-                    mViewGroup,
-                    originalLayoutParams,
-                    originalGravity
-                )
                 dismiss()
             }
         }
         skipButton.setOnClickListener {
-            resetLayoutAndDismissDialog(
-                mViewGroup,
-                originalLayoutParams,
-                originalGravity
-            )
             dismiss()
         }
     }

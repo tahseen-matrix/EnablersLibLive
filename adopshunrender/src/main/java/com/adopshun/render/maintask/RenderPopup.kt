@@ -56,7 +56,6 @@ import java.util.regex.Pattern
 
 object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
 
-    var alertDialog: AlertDialog? = null
     var index = 0
     var mLayout = 0
     var mContext: AppCompatActivity? = null
@@ -224,6 +223,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
         return rootParams
     }
 
+
     @SuppressLint("Range")
     internal fun showToolTip(
         context: AppCompatActivity,
@@ -232,12 +232,6 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
         originalGravity: Int?, parentViewGroup: ViewGroup
     ) {
         try {
-            // Modify the mViewGroup layout parameters when creating the popup
-            val popupLayoutParams = FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT
-            )
-            parentViewGroup.layoutParams = popupLayoutParams
             // Inflate the layout using data binding
             val binding = PopupLayoutBinding.inflate(LayoutInflater.from(context))
             // Extract data from identifierDesign
@@ -260,7 +254,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                 val gravity = calculateGravity(parentViewGroup, anchorView, context)
 
                 // Create layout parameters for the tooltip container
-                val rootParams = createLayoutParams(gravity, linearRoot, btnSkip)
+                createLayoutParams(gravity, linearRoot, btnSkip)
 
                 // Set up views within the tooltip
                 setupViews(
@@ -274,23 +268,30 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
 
                 // Create and show the tooltip
                 tooltip =
-                    createTooltip(context, anchorView, gravity, root, btnSkip.id, parentViewGroup)
+                    createTooltip(
+                        context,
+                        anchorView,
+                        gravity,
+                        root,
+                        btnSkip.id,
+                        parentViewGroup,
+                        originalLayoutParams,
+                        originalGravity
+                    )
                 tooltip?.show()
 
                 // Set click listeners for skip and cancel buttons
                 btnSkip.setOnClickListener {
-                    resetLayoutAndDismissTooltip(
-                        parentViewGroup,
-                        binding.root,
-                        tooltip, context, originalLayoutParams, originalGravity
-                    )
+                    root.visibility = View.GONE
+                    if (tooltip?.isShowing == true) {
+                        tooltip?.dismiss()
+                    }
                 }
                 btnCancel.setOnClickListener {
-                    resetLayoutAndDismissTooltip(
-                        parentViewGroup,
-                        binding.root,
-                        tooltip, context, originalLayoutParams, originalGravity
-                    )
+                    root.visibility = View.GONE
+                    if (tooltip?.isShowing == true) {
+                        tooltip?.dismiss()
+                    }
                     isNextDialogTypeExist(
                         context,
                         originalLayoutParams,
@@ -310,8 +311,6 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
 
     private fun resetLayoutAndDismissTooltip(
         mViewGroup: ViewGroup,
-        tooltipContent: View,
-        tooltip: SimpleTooltip?,
         context: AppCompatActivity,
         originalLayoutParams: ViewGroup.LayoutParams?,
         originalGravity: Int?
@@ -321,14 +320,14 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
         context.runOnUiThread {
             originalLayoutParams?.let {
                 mViewGroup.layoutParams = it
-            }
-            tooltipContent.visibility = View.GONE
-            if (tooltip?.isShowing == true) {
-                tooltip.dismiss()
+                if (it is FrameLayout.LayoutParams && originalGravity != null) {
+                    it.gravity = originalGravity
+                }
             }
         }
         Log.d("ResetLayout", "ResetLayoutAndDismissTooltip completed")
     }
+
     @SuppressLint("Range")
     private fun setupViews(
         innerLayoutArray: List<RenderModel.InnerLayout>,
@@ -489,11 +488,10 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                     button.layoutParams = params
 
                     button.setOnClickListener {
-                        resetLayoutAndDismissTooltip(
-                            parentViewGroup,
-                            tooltipContent,
-                            tooltip, context, originalLayoutParams, originalGravity
-                        )
+                        tooltipContent.visibility = View.GONE
+                        if (tooltip?.isShowing == true) {
+                            tooltip?.dismiss()
+                        }
                         isNextDialogTypeExist(
                             context,
                             originalLayoutParams,
@@ -530,7 +528,8 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
         gravity: Int,
         contentView: View,
         skipButtonId: Int,
-        mViewGroup: ViewGroup
+        mViewGroup: ViewGroup, originalLayoutParams: ViewGroup.LayoutParams?,
+        originalGravity: Int?
     ): SimpleTooltip? {
         return SimpleTooltip.Builder(context)
             .anchorView(anchorView)
@@ -538,6 +537,14 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
             .dismissOnOutsideTouch(false)
             .dismissOnInsideTouch(false)
             .modal(true)
+            .onDismissListener {
+                resetLayoutAndDismissTooltip(
+                    mViewGroup,
+                    context,
+                    originalLayoutParams,
+                    originalGravity
+                )
+            }
             .setWidth(mViewGroup.width)
             .transparentOverlay(false)
             .highlightShape(OverlayView.HIGHLIGHT_SHAPE_RECTANGULAR)
@@ -546,6 +553,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
             .contentView(contentView, skipButtonId)
             .focusable(true)
             .build()
+
     }
 
     private fun calculateGravity(
@@ -623,53 +631,6 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                     )
                 }
             }
-        }
-    }
-
-
-    private fun createAlertDialog(
-        dialogView: PopupLayoutBinding, context: AppCompatActivity,
-        outerLayout: RenderModel.OuterLayout,
-    ): AlertDialog {
-
-        val builder = AlertDialog.Builder(context)
-
-        builder.setView(dialogView.root)
-        alertDialog = builder.create()
-
-        val window: Window = alertDialog!!.window!!
-        window.setLayout(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.WRAP_CONTENT
-        )
-
-        val gravity = when (outerLayout.position) {
-            "center" -> {
-                Gravity.CENTER
-            }
-            "left" -> {
-                Gravity.START
-            }
-            "right" -> {
-                Gravity.END
-            }
-            else -> {
-                Gravity.BOTTOM
-            }
-        }
-
-        window.setGravity(gravity)
-        val back = ColorDrawable(Color.TRANSPARENT)
-        val inset = InsetDrawable(back, 70)
-        alertDialog?.window?.setBackgroundDrawable(inset)
-        alertDialog?.setCanceledOnTouchOutside(false)
-
-        return alertDialog!!
-    }
-
-    fun closeAlertDialog() {
-        if (alertDialog != null) {
-            alertDialog?.dismiss()
         }
     }
 
