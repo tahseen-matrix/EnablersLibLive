@@ -49,14 +49,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginVertical="@dimen/_15sdp"
-        android:background="@drawable/skip_button_bg"
-        android:backgroundTint="@color/lightgrey"
-        android:fontFamily="@font/opensans_semibold"
         android:gravity="center"
+        android:background="@drawable/skip_btn_bg"
         android:paddingHorizontal="@dimen/_40sdp"
         android:paddingVertical="@dimen/_7sdp"
-        android:text="SKIP"
-        android:textColor="@color/white"
-        android:textSize="@dimen/_12ssp" />
+        android:fontFamily="@font/opensans_semibold"
+        />
 
 </RelativeLayout>

@@ -114,6 +114,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
             mLayout = layout
             mContext = context
             appDb = AppDatabase.getDatabase(context)
+
             Handler(Looper.myLooper()!!).postDelayed({
                 index = 0
                 ApiInterfaceModel.instance!!.setListener(this)
@@ -194,7 +195,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
     }
 
     private fun findViewByTag(viewsList: List<View>, tag: String): View? {
-        return viewsList.firstOrNull { it.id == tag.toInt() }
+        return viewsList.firstOrNull { it.tag == tag }
     }
 
     private fun createLayoutParams(
@@ -208,7 +209,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
         )
         if (gravity == Gravity.BOTTOM) {
             rootParams.addRule(RelativeLayout.BELOW, rootLinear.id)
-            rootParams.setMargins(50, 50, 50, 50)
+            rootParams.setMargins(0, 50, 50, 50)
             skipButton.layoutParams = rootParams
         } else {
             // Handle other cases
@@ -217,7 +218,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                 RelativeLayout.LayoutParams.WRAP_CONTENT
             )
             rootParams.addRule(RelativeLayout.BELOW, skipButton.id)
-            rootParams.setMargins(50, 50, 50, 0)
+            rootParams.setMargins(0, 50, 0, 0)
             rootLinear.layoutParams = rootParams
         }
         return rootParams
@@ -244,7 +245,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                 // Initialize view IDs starting from 100
                 var counter2 = 100
                 for (i in 0 until viewsList.size) {
-                    viewsList[i].id = counter2
+                    viewsList[i].tag = "$counter2"
                     counter2++
                 }
                 // Find the anchor view by tag
@@ -285,18 +286,20 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                     root.visibility = View.GONE
                     if (tooltip?.isShowing == true) {
                         tooltip?.dismiss()
+                        parentViewGroup.removeView(binding.root)
                     }
                 }
                 btnCancel.setOnClickListener {
                     root.visibility = View.GONE
                     if (tooltip?.isShowing == true) {
                         tooltip?.dismiss()
+                        parentViewGroup.removeView(binding.root)
                     }
                     isNextDialogTypeExist(
                         context,
                         originalLayoutParams,
                         originalGravity,
-                        parentViewGroup
+                        parentViewGroup, binding.root
                     )
                 }
             }
@@ -308,6 +311,8 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
             Log.e("PingToolTip", "An error occurred: ${ex.message}")
         }
     }
+
+
 
     private fun resetLayoutAndDismissTooltip(
         mViewGroup: ViewGroup,
@@ -491,12 +496,13 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                         tooltipContent.visibility = View.GONE
                         if (tooltip?.isShowing == true) {
                             tooltip?.dismiss()
+                            parentViewGroup.removeView(tooltipContent)
                         }
                         isNextDialogTypeExist(
                             context,
                             originalLayoutParams,
                             originalGravity,
-                            parentViewGroup
+                            parentViewGroup, tooltipContent
                         )
                         if (innerLayoutArray[j].buttonUrl.isNotEmpty()) {
                             Handler(Looper.myLooper()!!).postDelayed({
@@ -590,7 +596,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
 
     private fun isNextDialogTypeExist(
         context: AppCompatActivity, originalLayoutParams: ViewGroup.LayoutParams?,
-        originalGravity: Int?, mViewGroup: ViewGroup
+        originalGravity: Int?, mViewGroup: ViewGroup, tooltipContent: View
     ) {
         if (index < popArray.size - 1) {
             index++
@@ -630,6 +636,13 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                         mViewGroup
                     )
                 }
+            }
+        }
+        else{
+            if (tooltip?.isShowing == true) {
+                tooltip?.dismiss()
+                mViewGroup.removeView(tooltipContent)
+
             }
         }
     }

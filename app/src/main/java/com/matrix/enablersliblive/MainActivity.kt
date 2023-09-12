@@ -1,17 +1,12 @@
 package com.matrix.enablersliblive
 
-import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import com.adopshun.creator.maincreator.AdopshunCreator
-import com.adopshun.creator.utils.Extensions.log
-import com.adopshun.creator.utils.Extensions.toast
 import com.adopshun.render.maintask.RenderPopup
-import com.google.android.material.navigation.NavigationBarView
 import com.matrix.enablersliblive.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -51,19 +46,17 @@ class MainActivity : AppCompatActivity() {
         val viewGroup = (findViewById<View>(android.R.id.content) as ViewGroup).getChildAt(0) as ViewGroup
         AdopshunCreator.initAdopshun(this,viewGroup)
         AdopshunCreator.initLayout(R.layout.activity_main)
-        runOnUiThread {
-            RenderPopup.showPopups(this,  R.layout.activity_main)
-        }
 
+        RenderPopup.showPopups(this, R.layout.activity_main)
         binding.navigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.navigation_home -> {
                     Toast.makeText(this@MainActivity, "Home", Toast.LENGTH_SHORT).show()
                     true
                 }
-                R.id.navigation_dashboard -> {
-                    Toast.makeText(this@MainActivity, "Dashboard", Toast.LENGTH_SHORT).show()
-                    false
+                R.id.navigation_notifications -> {
+                    Toast.makeText(this@MainActivity, "Notification", Toast.LENGTH_SHORT).show()
+                    true
                 }
                 else -> false
             }

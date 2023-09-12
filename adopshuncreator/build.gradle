@@ -93,7 +93,7 @@ dependencies {
 
 
     // unbundled:
-   // implementation("io.github.g00fy2.quickie:quickie-unbundled:1.5.1")
+    // implementation("io.github.g00fy2.quickie:quickie-unbundled:1.5.1")
     implementation 'com.google.mlkit:barcode-scanning:17.0.2'
 
     def camerax_version = "1.1.0"
