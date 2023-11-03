@@ -100,7 +100,7 @@ class RenderModel {
 
         @SerializedName("step")
         @Expose
-         val step: Int = 0
+         val step: Any? = null
 
         @SerializedName("outer_layout")
         @Expose

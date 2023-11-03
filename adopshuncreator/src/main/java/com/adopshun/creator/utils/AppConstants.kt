@@ -3,7 +3,7 @@ package com.adopshun.creator.utils
 object AppConstants{
 
     const val BASE_URL_SOCKET = "https://socket.adopshun.matrixm.io"
-    const val BASE_URL = "https://adopshun.com/api/" //"https://adopshun.matrixm.io/api/"
+    const val BASE_URL = "https://adopshun.matrixm.io/api/" //"https://adopshun.com/api/" //"https://adopshun.matrixm.io/api/"
     const val EVENT_JOIN = "join"
     const val ROOM_ = "room1"
     const val EVENT_SCREEN = "app_screen"

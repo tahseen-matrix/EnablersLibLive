@@ -11,10 +11,11 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.content.ContextCompat
 import com.adopshun.creator.R
 import com.adopshun.creator.models.CustomModel
 import com.adopshun.creator.models.JsonModel
@@ -24,12 +25,14 @@ import com.adopshun.creator.qrcode.ScanQRCode
 import com.adopshun.creator.retrofit.RetrofitService
 import com.adopshun.creator.utils.Extensions
 import com.adopshun.creator.utils.Extensions.getAllChildrenViews
+import com.adopshun.creator.utils.Extensions.isJSONValid
 import com.adopshun.creator.utils.Extensions.pxToDp
 import com.adopshun.creator.utils.ScreenshotUtils
 import com.google.gson.Gson
-import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
@@ -39,15 +42,19 @@ import java.io.*
 
 object AdopshunCreator : CustomModel.OnCustomStateListener {
 
+    @JvmStatic
     private lateinit var floatingActionButton: MovableFloatingActionButton
     // var mLayout :Int? = null
     // var mContext :AppCompatActivity? = null
 
+    @JvmStatic
     var mLayout = 0
+    @JvmStatic
     fun initLayout(layout: Int){
         mLayout = layout
 
     }
+    @JvmStatic
     fun initAdopshun(
         context: AppCompatActivity,
         viewGroup: ViewGroup
@@ -60,37 +67,36 @@ object AdopshunCreator : CustomModel.OnCustomStateListener {
             when (result) {
                 is QRResult.QRSuccess -> {
                     val value = result.content.rawValue
-                    val jObject = JSONObject(value)
-                    val userId = jObject.getString("user_id")
-                    val uniqueId = jObject.getString("unique_id")
-                    val sessionId = jObject.getString("session_id")
-                    val projectName = jObject.getString("project_name")
+                    if (isJSONValid(value)){
+                        val jObject = JSONObject(value)
+                        val userId = jObject.getString("user_id")
+                        val uniqueId = jObject.getString("unique_id")
+                        val sessionId = jObject.getString("session_id")
+                        val projectName = jObject.getString("project_name")
 
-                    // val mViewGroup = (mContext!!.findViewById<View>(android.R.id.content) as ViewGroup).getChildAt(0) as ViewGroup
-
-                    floatingActionButton.visibility = View.GONE
-                    val width: Int = context.pxToDp(viewGroup.width)
-                    val height: Int = context.pxToDp(viewGroup.height)
+                        floatingActionButton.visibility = View.GONE
+                        val width: Int = context.pxToDp(viewGroup.width)
+                        val height: Int = context.pxToDp(viewGroup.height)
 
 
-                    val hashMap = HashMap<String, Any>()
-                    hashMap["Height"] = height
-                    hashMap["Width"] = width
-                    hashMap["UserId"] = userId!!
-                    hashMap["UniqueId"] = uniqueId!!
-                    hashMap["SessionId"] = sessionId!!
-                    hashMap["ScreenId"] = mLayout
-                    hashMap["ProjectName"] = projectName
-                    hashMap["UniqueProjectId"] = context.applicationContext.packageName
+                        val hashMap = HashMap<String, Any>()
+                        hashMap["Height"] = height
+                        hashMap["Width"] = width
+                        hashMap["UserId"] = userId!!
+                        hashMap["UniqueId"] = uniqueId!!
+                        hashMap["SessionId"] = sessionId!!
+                        hashMap["ScreenId"] = mLayout
+                        hashMap["ProjectName"] = projectName
+                        hashMap["UniqueProjectId"] = context.applicationContext.packageName
 
-                    sendAllViews(context, viewGroup, hashMap)
+                        sendAllViews(context, viewGroup, hashMap)
+                    }
                     floatingActionButton.visibility = View.VISIBLE
 
 
                 }
                 QRResult.QRUserCanceled -> "User canceled"
                 QRResult.QRMissingPermission -> {
-                    //toast("Missing Permission")
                     context.startActivity(
                         Intent(
                             Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
@@ -110,83 +116,8 @@ object AdopshunCreator : CustomModel.OnCustomStateListener {
         }
     }
 
-
-    fun passLayout(context: AppCompatActivity, layout: Int){
-
-        //context = context
-        //mLayout = layout
-
-    }
-
-/*
-    private fun qrResult(result: QRResult) {
-        when (result) {
-            is QRResult.QRSuccess -> {
-                val value = result.content.rawValue
-                val jObject = JSONObject(value)
-                val userId = jObject.getString("user_id")
-                val uniqueId = jObject.getString("unique_id")
-                val sessionId = jObject.getString("session_id")
-                val projectName = jObject.getString("project_name")
-
-                val mViewGroup = (mContext!!.findViewById<View>(android.R.id.content) as ViewGroup).getChildAt(0) as ViewGroup
-
-                floatingActionButton.visibility = View.GONE
-                val width: Int = mContext!!.pxToDp(mViewGroup.width)
-                val height: Int = mContext!!.pxToDp(mViewGroup.height)
-
-
-                val hashMap = HashMap<String, Any>()
-                hashMap["Height"] = height
-                hashMap["Width"] = width
-                hashMap["UserId"] = userId!!
-                hashMap["UniqueId"] = uniqueId!!
-                hashMap["SessionId"] = sessionId!!
-                hashMap["ScreenId"] = mLayout!!
-                hashMap["ProjectName"] = projectName
-                hashMap["UniqueProjectId"] = mContext!!.applicationContext.packageName
-
-                sendAllViews(mContext!!, mViewGroup, hashMap)
-                floatingActionButton.visibility = View.VISIBLE
-
-
-            }
-            QRResult.QRUserCanceled -> "User canceled"
-            QRResult.QRMissingPermission -> {
-                //toast("Missing Permission")
-                mContext!!.startActivity(
-                    Intent(
-                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                        Uri.fromParts("package", mContext!!.packageName, null)
-                    )
-                )
-            }
-            is QRResult.QRError -> "${result.exception.javaClass.simpleName}: ${result.exception.localizedMessage}"
-
-        }
-    }
-*/
-
-
-    fun start(s: String) {
-        //  context.startActivity(Intent(context, ScannerActivity::class.java))
-    }
-
-//    fun createFloating(context: AppCompatActivity, viewGroup: ViewGroup): MovableFloatingActionButton {
-//        //return ScannerActivity().setupFloatingActionButton(context,viewGroup)
-//
-//    }
-
-
-
-
-    /* fun sendAllViews(context: AppCompatActivity, layout: ViewGroup, view: MovableFloatingActionButton, hashMap: HashMap<String, Any>) {
-         ScannerActivity().sendAllViews(context, layout,view!!,hashMap)
-     }*/
-
-
-
-    fun sendAllViews(
+    @JvmStatic
+    private fun sendAllViews(
         context: AppCompatActivity,
         layout: ViewGroup,
         hashMap: HashMap<String, Any>) {
@@ -271,6 +202,7 @@ object AdopshunCreator : CustomModel.OnCustomStateListener {
     }
 
 
+    @JvmStatic
     private fun callApi(
         bitmap: Bitmap,
         jsonString: String,
@@ -278,39 +210,19 @@ object AdopshunCreator : CustomModel.OnCustomStateListener {
         user_id: String,
         unique_id: String,
         session_id: String,
-        projectName: String,
+        project_name: String,
         uniqueProject_id: String,
         screenId: String
     ) {
+        val mediaType = "text/plain"
         val service = RetrofitService.getInstance(context)
-        val userId = RequestBody.create(
-            MediaType.parse("text/plain"),
-            user_id)
-
-        val uniqueId = RequestBody.create(
-            MediaType.parse("text/plain"),
-            unique_id)
-
-        val metaData = RequestBody.create(MediaType.parse("text/plain"), jsonString)
-
-        val sessionId = RequestBody.create(
-            MediaType.parse("text/plain"),
-            session_id)
-
-        val projectName = RequestBody.create(
-            MediaType.parse("text/plain"),
-            projectName)
-
-
-        val screeId = RequestBody.create(
-            MediaType.parse("text/plain"),
-            screenId)
-
-        val uniqueProjectId = RequestBody.create(
-            MediaType.parse("text/plain"),
-            uniqueProject_id)
-
-
+        val userId = user_id.toRequestBody(mediaType.toMediaTypeOrNull())
+        val uniqueId = unique_id.toRequestBody(mediaType.toMediaTypeOrNull())
+        val metaData = jsonString.toRequestBody(mediaType.toMediaTypeOrNull())
+        val sessionId = session_id.toRequestBody(mediaType.toMediaTypeOrNull())
+        val projectName = project_name.toRequestBody(mediaType.toMediaTypeOrNull())
+        val screeId = screenId.toRequestBody(mediaType.toMediaTypeOrNull())
+        val uniqueProjectId = uniqueProject_id.toRequestBody(mediaType.toMediaTypeOrNull())
         val file = buildImageBodyPart("image", bitmap, context)
 
         service.sendScreenshot(
@@ -327,23 +239,25 @@ object AdopshunCreator : CustomModel.OnCustomStateListener {
 
             override fun onResponse(call: Call<QRModel>, response: Response<QRModel>?) {
                 // llProgressBar.visibility = View.GONE
-
-                if (response?.code() == 200) {
-                    Extensions.log(response.message())
-                    CustomModel.instance!!.apiCall(response.body()!!.message!!)
-
-                } else if (response?.code() == 404) {
-                    Extensions.log("Not found")
-                    CustomModel.instance!!.apiCall(response.body()!!.message!!)
-
-                } else if (response?.code() == 500) {
-                    Extensions.log("Internal Server Error")
-                    CustomModel.instance!!.apiCall(response.body()!!.message!!)
-
-                } else {
-                    Extensions.log(
-                        response?.code().toString() + "The unique project id has already been taken.")
-                    CustomModel.instance!!.apiCall("The unique project id has already been taken.")
+                when (response?.code()) {
+                    200 -> {
+                        Extensions.log(response.message())
+                        CustomModel.instance?.apiCall(response.body()!!.message!!)
+                    }
+                    404 -> {
+                        Extensions.log("Not found")
+                        CustomModel.instance?.apiCall(response.body()!!.message!!)
+                    }
+                    500 -> {
+                        Extensions.log("Internal Server Error")
+                        CustomModel.instance?.apiCall(response.body()!!.message!!)
+                    }
+                    else -> {
+                        val errorMessage =
+                            response?.code().toString() + "The unique project id has already been taken."
+                        Extensions.log(errorMessage)
+                        CustomModel.instance?.apiCall("The unique project id has already been taken.")
+                    }
                 }
 
             }
@@ -351,7 +265,7 @@ object AdopshunCreator : CustomModel.OnCustomStateListener {
             override fun onFailure(call: Call<QRModel>, t: Throwable) {
                 Extensions.log(t.toString())
                 //llProgressBar.visibility = View.GONE
-                CustomModel.instance!!.apiCall(t.toString())
+                CustomModel.instance?.apiCall(t.toString())
 
             }
         })
@@ -362,6 +276,7 @@ object AdopshunCreator : CustomModel.OnCustomStateListener {
 
 
 
+    @JvmStatic
     private fun convertBitmapToFile(fileName: String, bitmap: Bitmap, context: Context): File {
         //create a file to write bitmap data
         val file = File(context.cacheDir, fileName)
@@ -389,19 +304,21 @@ object AdopshunCreator : CustomModel.OnCustomStateListener {
         return file
     }
 
+    @JvmStatic
     private fun buildImageBodyPart(
         fileName: String,
         bitmap: Bitmap,
         context: Context
     ): MultipartBody.Part {
         val leftImageFile = convertBitmapToFile(fileName, bitmap, context)
-        val reqFile = RequestBody.create(MediaType.parse("image/*"), leftImageFile)
+        val reqFile = leftImageFile.asRequestBody("image/*".toMediaTypeOrNull())
         return MultipartBody.Part.createFormData(fileName, leftImageFile.name, reqFile)
     }
 
 
 
-    fun setupFloatingActionButton(
+    @JvmStatic
+    private fun setupFloatingActionButton(
         context: AppCompatActivity,
         viewGroup: ViewGroup
     ): MovableFloatingActionButton {
@@ -419,7 +336,8 @@ object AdopshunCreator : CustomModel.OnCustomStateListener {
         return floatingActionButton
 
     }
-    fun setActivityRoot(c: Activity): CoordinatorLayout {
+    @JvmStatic
+    private fun setActivityRoot(c: Activity): CoordinatorLayout {
         val v = (c.findViewById<View>(android.R.id.content) as ViewGroup).getChildAt(0)
         val sv = CoordinatorLayout(c)
         val lp = ViewGroup.LayoutParams(
@@ -427,7 +345,8 @@ object AdopshunCreator : CustomModel.OnCustomStateListener {
             ViewGroup.LayoutParams.MATCH_PARENT
         )
         sv.layoutParams = lp
-        sv.setBackgroundColor(c.resources.getColor(android.R.color.white))
+        // With this line
+        sv.setBackgroundColor(ContextCompat.getColor(c, android.R.color.white))
         (v.parent as ViewGroup).removeAllViews()
         sv.addView(v as View)
         c.addContentView(sv, lp)

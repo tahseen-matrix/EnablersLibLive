@@ -1,6 +1,5 @@
 package com.adopshun.render.model
 
-import android.view.ViewGroup
 import com.google.gson.JsonObject
 
 class ApiInterfaceModel private constructor() {

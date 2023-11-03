@@ -70,6 +70,9 @@ public class OverlayView extends View {
         this.cornerRadius = cornerRadius;
     }
 
+    /**
+     * @param canvas
+     */
     @Override
     protected void dispatchDraw(Canvas canvas) {
         if (invalidated || bitmap == null || bitmap.isRecycled())
@@ -79,6 +82,9 @@ public class OverlayView extends View {
             canvas.drawBitmap(bitmap, 0, 0, null);
     }
 
+    /**
+     *
+     */
     private void createWindowFrame() {
         final int width = getMeasuredWidth(), height = getMeasuredHeight();
         if (width <= 0 || height <= 0)

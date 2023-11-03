@@ -2,12 +2,14 @@ package com.adopshun.render.maintask
 
 object AppConstants{
 
-    const val BASE_URL = "https://adopshun.com/api/"// ""https://adopshun.matrixm.io/api/"
+    const val BASE_URL = "https://adopshun.matrixm.io/api/" //"https://adopshun.com/api/"  "
+    const val SEGMENT_BASE_URL = "https://testoct.requestcatcher.com/"// ""https://adopshun.matrixm.io/api/"
 
 
     const val IS_POP_STATUS:String = "isPopUp"
     const val IS_FIRST_RUN:String = "isFirstRun"
 
+    const val isFromSegment:Boolean = false
     object VIEWTYPE{
         const val IMAGE = "image"
         const val LABEL = "label"

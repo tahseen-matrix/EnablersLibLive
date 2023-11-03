@@ -88,6 +88,13 @@ public class ArrowDrawable extends ColorDrawable {
                 mPath.lineTo(bounds.width(), 0);
                 mPath.lineTo(0, 0);
                 break;
+            default:
+                // Handle the default case here, for example:
+                mPath.moveTo(0, 0);
+                mPath.lineTo(bounds.width(), bounds.height());
+                mPath.lineTo(0, bounds.height());
+                mPath.lineTo(0, 0);
+                break;
         }
 
         mPath.close();
@@ -106,6 +113,7 @@ public class ArrowDrawable extends ColorDrawable {
         mPaint.setAlpha(alpha);
     }
 
+    @Override
     public void setColor(@ColorInt int color) {
         mPaint.setColor(color);
     }
@@ -126,7 +134,8 @@ public class ArrowDrawable extends ColorDrawable {
                 return PixelFormat.OPAQUE;
             case 0:
                 return PixelFormat.TRANSPARENT;
+            default:
+                return PixelFormat.TRANSLUCENT;
         }
-        return PixelFormat.TRANSLUCENT;
     }
 }

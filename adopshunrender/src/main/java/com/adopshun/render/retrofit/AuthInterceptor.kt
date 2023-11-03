@@ -1,20 +1,15 @@
 package com.adopshun.render.retrofit
 
 import android.content.Context
-import com.adopshun.render.maintask.PreferencesManager
 import okhttp3.Interceptor
 import okhttp3.Response
 
-class AuthInterceptor(var context: Context?) : Interceptor {
-
-    private var sessionManager = PreferencesManager(context!!)
-
+class AuthInterceptor(private val authToken: Context) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
-        val requestBuilder = chain.request().newBuilder()
-        PreferencesManager.initializeInstance(context = context!!)
-        sessionManager = PreferencesManager.instance!!
-
-
-        return chain.proceed(requestBuilder.build())
+        val original = chain.request()
+        val requestBuilder = original.newBuilder()
+            .header("Authorization", "Bearer $authToken") // Add the Bearer token
+        val request = requestBuilder.build()
+        return chain.proceed(request)
     }
 }

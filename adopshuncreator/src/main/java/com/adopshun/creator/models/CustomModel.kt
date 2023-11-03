@@ -3,7 +3,7 @@ package com.adopshun.creator.models
 class CustomModel private constructor() {
     interface OnCustomStateListener {
         fun onQrScan(user_id: String?, unique_id: String?, session_id: String?, project_id: String){
-            System.out.println("Default implementation of the display method");
+            println("Default implementation of the display method")
         }
         fun onApiCall(message: String?)
     }
@@ -35,11 +35,11 @@ class CustomModel private constructor() {
         session_id: String,
         project_name: String
     ) {
-        mListener!!.onQrScan(user_id, unique_id, session_id,project_name)
+        mListener?.onQrScan(user_id, unique_id, session_id,project_name)
     }
 
     private fun onApiCallState(message: String) {
-        mListener!!.onApiCall(message)
+        mListener?.onApiCall(message)
     }
 
     companion object {

@@ -11,6 +11,7 @@ import java.lang.Exception
 
 object ScreenshotUtils {
     /*  Method which will return Bitmap after taking screenshot. We have to pass the view which we want to take screenshot.  */
+    @JvmStatic
     fun getScreenShot(view: View): Bitmap {
         val screenView = view
         screenView.isDrawingCacheEnabled = true
@@ -22,6 +23,7 @@ object ScreenshotUtils {
     }
 
     /*  Create Directory where screenshot will save for sharing screenshot  */
+    @JvmStatic
     fun getMainDirectoryName(context: Context): File {
         //Here we will use getExternalFilesDir and inside that we will make our Demo folder
         //benefit of getExternalFilesDir is that whenever the app uninstalls the images will get deleted automatically.
@@ -37,6 +39,7 @@ object ScreenshotUtils {
     }
 
     /*  Store taken screenshot into above created path  */
+    @JvmStatic
     fun store(bm: Bitmap, fileName: String?, saveFilePath: File): File {
         val dir = File(saveFilePath.absolutePath)
         if (!dir.exists()) dir.mkdirs()

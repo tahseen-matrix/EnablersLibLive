@@ -35,6 +35,7 @@ import com.google.gson.Gson
 import com.adopshun.creator.qrcode.QRResult
 import com.adopshun.creator.qrcode.ScanQRCode
 import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import org.json.JSONObject
@@ -206,7 +207,7 @@ class ScannerActivity : BaseActivity() {
         context: Context
     ): MultipartBody.Part {
         val leftImageFile = convertBitmapToFile(fileName, bitmap, context)
-        val reqFile = RequestBody.create(MediaType.parse("image/*"), leftImageFile)
+        val reqFile = RequestBody.create("image/*".toMediaTypeOrNull(), leftImageFile)
         return MultipartBody.Part.createFormData(fileName, leftImageFile.name, reqFile)
     }
 
@@ -222,27 +223,27 @@ class ScannerActivity : BaseActivity() {
     ) {
         val service = RetrofitService.getInstance(context)
         val userId = RequestBody.create(
-            MediaType.parse("text/plain"),
+            "text/plain".toMediaTypeOrNull(),
             user_id
         )
 
         val uniqueId = RequestBody.create(
-            MediaType.parse("text/plain"),
+            "text/plain".toMediaTypeOrNull(),
             unique_id
         )
 
-        val metaData = RequestBody.create(MediaType.parse("text/plain"), jsonString)
+        val metaData = RequestBody.create("text/plain".toMediaTypeOrNull(), jsonString)
 
         val sessionId = RequestBody.create(
-            MediaType.parse("text/plain"),
+            "text/plain".toMediaTypeOrNull(),
             session_id
         )
         val projectName = RequestBody.create(
-            MediaType.parse("text/plain"),
+            "text/plain".toMediaTypeOrNull(),
             projectName
         )
         val uniqueProjectId = RequestBody.create(
-            MediaType.parse("text/plain"),
+            "text/plain".toMediaTypeOrNull(),
             uniqueProject_id
         )
 

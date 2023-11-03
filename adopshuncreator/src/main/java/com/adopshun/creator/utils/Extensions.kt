@@ -2,23 +2,17 @@ package com.adopshun.creator.utils
 
 import android.content.Context
 import android.graphics.Rect
-import android.os.Build
-import android.os.Bundle
-import android.text.*
-import android.util.DisplayMetrics
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
-import android.view.Display
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
-import androidx.fragment.app.FragmentTransaction
-import com.adopshun.creator.R
+import org.json.JSONObject
+import org.json.JSONTokener
 import kotlin.math.roundToInt
 
 
@@ -41,10 +35,7 @@ object Extensions {
     fun Context.pxToDp(px: Int): Int {
         return (px / resources.displayMetrics.density).toInt()
     }
-    fun Context.doToPixels(dp: Int): Int {
-        val px = dp * (160 / 160)
-        return px
-    }
+
 
 
 
@@ -58,15 +49,7 @@ object Extensions {
     }
 
 
-    private fun getScreenResolution(context: Context): String? {
-        val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        val display: Display = wm.defaultDisplay
-        val metrics = DisplayMetrics()
-        display.getMetrics(metrics)
-        val width = metrics.widthPixels
-        val height = metrics.heightPixels
-        return "{$width,$height}"
-    }
+
 
     fun View.centerX():Int{
         val myViewRect = Rect()
@@ -80,98 +63,11 @@ object Extensions {
         return cy.toInt()
     }
 
-    fun Context.convertInoPx(value:Int): Float {
-        val scale: Float = getResources().getDisplayMetrics().density
-        val pixels = (value * scale + 0.5f)
-
-        return pixels
+    fun Context.convertInoPx(value: Int): Float {
+        val scale: Float = resources.displayMetrics.density
+        return (value * scale + 0.5f)
     }
 
-    fun View.absX(): Int
-    {
-        val location = IntArray(2)
-        this.getLocationInWindow(location)
-        return location[0]
-    }
-
-
-
-    fun View.absY(): Int
-    {
-        val location = IntArray(2)
-        this.getLocationInWindow(location)
-        return location[1]
-    }
-
-    fun AppCompatActivity.replaceFragmentWithBundle(fragment: Fragment, frameId: Int, bundle:Bundle,addToStack: Boolean) {
-
-        fragment.arguments = bundle
-        supportFragmentManager.inTransaction {
-            if (addToStack) replace(frameId, fragment, fragment.javaClass.simpleName)
-                .addToBackStack(fragment.javaClass.simpleName)
-            else
-                replace(frameId, fragment, fragment.javaClass.simpleName)
-        }
-
-    }
-
-
-    inline fun FragmentManager.inTransaction(func: FragmentTransaction.() -> FragmentTransaction) {
-        beginTransaction().func().commit()
-    }
-
-
-
-    fun AppCompatActivity.addFragment(fragment: Fragment, frameId: Int) {
-        supportFragmentManager.inTransaction { add(frameId, fragment, fragment.javaClass.simpleName) }
-    }
-
-    fun AppCompatActivity.replaceFragment(fragment: Fragment, frameId: Int) {
-        supportFragmentManager.inTransaction { replace(frameId, fragment, fragment.javaClass.simpleName) }
-    }
-
-    fun AppCompatActivity.replaceFragment(fragment: Fragment, frameId: Int, addToStack: Boolean) {
-        supportFragmentManager.inTransaction {
-            if (addToStack) replace(frameId, fragment, fragment.javaClass.simpleName)
-                .addToBackStack(fragment.javaClass.simpleName)
-            else
-                replace(frameId, fragment, fragment.javaClass.simpleName)
-        }
-    }
-
-    fun AppCompatActivity.replaceFragment(fragment: Fragment, frameId: Int, addToStack: Boolean, clearBackStack: Boolean) {
-        supportFragmentManager.inTransaction {
-
-            if (clearBackStack && supportFragmentManager.backStackEntryCount > 0) {
-                val first = supportFragmentManager.getBackStackEntryAt(0)
-                supportFragmentManager.popBackStack(first.id, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-            }
-
-            if (addToStack) replace(frameId, fragment, fragment.javaClass.simpleName)
-                .addToBackStack(fragment.javaClass.simpleName)
-            else
-                replace(frameId, fragment, fragment.javaClass.simpleName)
-        }
-    }
-
-    fun AppCompatActivity.addFragment(fragment: Fragment, frameId: Int, addToStack: Boolean) {
-        supportFragmentManager.inTransaction {
-            if (addToStack) add(frameId, fragment, fragment.javaClass.simpleName)
-                .addToBackStack(fragment.javaClass.simpleName)
-            else add(frameId, fragment)
-        }
-    }
-
-
-    fun AppCompatActivity.getCurrentFragment(): Fragment? {
-        val fragmentManager = supportFragmentManager
-        var fragmentTag: String? = ""
-
-        if (fragmentManager.backStackEntryCount > 0)
-            fragmentTag = fragmentManager.getBackStackEntryAt(fragmentManager.backStackEntryCount - 1).name
-
-        return fragmentManager.findFragmentByTag(fragmentTag)
-    }
 
 
     fun View.getAllChildrenViews(): ArrayList<View> {
@@ -188,21 +84,18 @@ object Extensions {
     }
 
 
-    fun AppCompatActivity.transparentStatusBar(){
-        window.apply {
-            clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
-            addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                decorView.systemUiVisibility =
-                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-            } else {
-                decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-            }
-            statusBarColor = ContextCompat.getColor(context, R.color.transparent)
+
+
+    fun isJSONValid(jsonString: String): Boolean {
+        return try {
+            JSONObject(JSONTokener(jsonString))
+            // If parsing succeeds, it's valid JSON
+            true
+        } catch (e: Exception) {
+            // If parsing fails, it's not valid JSON
+            false
         }
     }
-
     fun AppCompatActivity.toast(message:String){
         Toast.makeText(this,message,Toast.LENGTH_SHORT).show()
     }
@@ -251,21 +144,5 @@ object Extensions {
         menuLayoutParams.setMargins(0, marginTop, 0, 0)
         this.layoutParams = menuLayoutParams
     }
-    fun AppCompatActivity.fromHtml(html: String?): Spanned? {
-        return if (html == null) {
-            // return an empty spannable if the html is null
-            SpannableString("")
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            // FROM_HTML_MODE_LEGACY is the behaviour that was used for versions below android N
-            // we are using this flag to give a consistent behaviour
-            Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY)
-        } else {
-            Html.fromHtml(html)
-        }
-    }
-
-
-
-
 
 }

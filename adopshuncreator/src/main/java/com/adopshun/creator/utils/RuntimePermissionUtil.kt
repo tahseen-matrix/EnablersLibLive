@@ -22,6 +22,7 @@ import androidx.core.app.ActivityCompat
 
 internal object RuntimePermissionUtil {
     
+    @JvmStatic
     fun onRequestPermissionsResult(
         grantResults: IntArray,
         rpResultListener: RPResultListener
@@ -37,6 +38,7 @@ internal object RuntimePermissionUtil {
         }
     }
 
+    @JvmStatic
     fun requestPermission(
         activity: Activity?, permissions: Array<String?>?,
         REQUEST_CODE: Int
@@ -45,6 +47,7 @@ internal object RuntimePermissionUtil {
         ActivityCompat.requestPermissions(activity!!, permissions!!, REQUEST_CODE)
     }
 
+    @JvmStatic
     fun requestPermission(
         activity: Activity?, permission: String,
         REQUEST_CODE: Int
@@ -53,6 +56,7 @@ internal object RuntimePermissionUtil {
         ActivityCompat.requestPermissions(activity!!, arrayOf(permission), REQUEST_CODE)
     }
 
+    @JvmStatic
     fun checkPermissonGranted(context: Context?, permission: String?): Boolean {
         return (ActivityCompat.checkSelfPermission(context!!, permission!!)
                 == PackageManager.PERMISSION_GRANTED)

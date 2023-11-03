@@ -7,6 +7,7 @@ import android.os.Vibrator
 
 object AppUtils {
     // Vibrate for 150 milliseconds
+    @JvmStatic
     fun shakeItBaby(context: Context) {
         if (Build.VERSION.SDK_INT >= 26) {
             (context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator).vibrate(

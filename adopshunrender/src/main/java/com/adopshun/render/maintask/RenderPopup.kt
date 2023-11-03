@@ -1,14 +1,13 @@
 package com.adopshun.render.maintask
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Rect
-import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
-import android.graphics.drawable.InsetDrawable
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
@@ -22,8 +21,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.AppCompatTextView
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.ViewCompat
 import com.adopshun.render.R
@@ -39,14 +36,15 @@ import com.adopshun.render.maintask.Extensions.showLog
 import com.adopshun.render.maintask.Extensions.showToast
 import com.adopshun.render.model.ApiInterfaceModel
 import com.adopshun.render.model.RenderModel
+import com.adopshun.render.model.SegmentModel
 import com.adopshun.render.retrofit.RetrofitService
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
@@ -56,17 +54,35 @@ import java.util.regex.Pattern
 
 object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
 
+    @JvmStatic
     var index = 0
-    var mLayout = 0
+
+    @JvmStatic
+    private var mLayout = 0
+
+    @JvmStatic
     var mContext: AppCompatActivity? = null
+
+    @JvmStatic
     var popArray: ArrayList<RenderModel.IdentifierDesign> = ArrayList()
+
+    @JvmStatic
     private lateinit var appDb: AppDatabase
 
+    @JvmStatic
     @SuppressLint("StaticFieldLeak")
     var tooltip: SimpleTooltip? = null
 
+
+    @JvmStatic
+    @JvmOverloads
     @SuppressLint("InvalidAnalyticsName")
-    fun checkFirstRun(context: AppCompatActivity, layout: Int) {
+    fun checkFirstRun(
+        context: AppCompatActivity,
+        layout: Int,
+        userId: String? = null,
+        segmentId: Int? = null
+    ) {
         val builder = AlertDialog.Builder(context)
         builder.setMessage("Do you want to show onboarding?")
         builder.setTitle("Adopshun")
@@ -86,7 +102,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
             Handler(Looper.myLooper()!!).postDelayed({
                 index = 0
                 ApiInterfaceModel.instance!!.setListener(this)
-                getPops(context, context.packageName)
+                getPops(context, context.packageName, userId, segmentId)
             }, 500)
 
 
@@ -102,11 +118,18 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
     }
 
 
-    fun showPopups(context: AppCompatActivity, layout: Int) {
+    @JvmStatic
+    @JvmOverloads
+    fun showPopups(
+        context: AppCompatActivity,
+        layout: Int,
+        userId: String? = null,
+        segmentId: Int? = null
+    ) {
         if (context.getSharedPreferences("renderFirstPop", MODE_PRIVATE)
                 ?.getBoolean(AppConstants.IS_FIRST_RUN, false) == false
         ) {
-            checkFirstRun(context, layout)
+            checkFirstRun(context, layout, userId, segmentId)
         }
         if (context.getSharedPreferences("renderFirstPop", MODE_PRIVATE)
                 ?.getBoolean(AppConstants.IS_POP_STATUS, false) == true
@@ -117,33 +140,155 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
 
             Handler(Looper.myLooper()!!).postDelayed({
                 index = 0
-                ApiInterfaceModel.instance!!.setListener(this)
-                getPops(context, context.packageName)
+                ApiInterfaceModel.instance?.setListener(this)
+                getPops(context, context.packageName, userId, segmentId)
             }, 500)
         }
 
     }
 
-    private fun getPops(context: AppCompatActivity, applicationId: String) {
+    @JvmOverloads
+    @JvmStatic
+    private fun getPops(
+        context: AppCompatActivity,
+        applicationId: String,
+        userId: String? = null,
+        segmentId: Int? = null
+    ) {
 
         showLog(applicationId)
-
         val service = RetrofitService.getInstance(context)
-        service.getJson(applicationId).enqueue(object : Callback<JsonObject> {
-            override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
-                if (response.isSuccessful) {
-                    val json = response.body()
-                    ApiInterfaceModel.instance!!.apiCall(json)
+        if (userId.isNullOrEmpty() && segmentId == null) {
+            service.getJson(applicationId).enqueue(object : Callback<JsonObject> {
+                override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
+                    if (response.isSuccessful) {
+                        val json = response.body()
+                        ApiInterfaceModel.instance?.apiCall(json)
+
+                    }
+                }
+
+                override fun onFailure(call: Call<JsonObject>, t: Throwable) {
+                    showToast(context, t.toString())
+                }
+            })
+        } else if (userId?.isNotEmpty() == true && segmentId != null) {
+            service.getJsonWithUserId(applicationId, userId.toString())
+                .enqueue(object : Callback<JsonObject> {
+                    override fun onResponse(
+                        call: Call<JsonObject>,
+                        response: Response<JsonObject>
+                    ) {
+                        if (response.isSuccessful) {
+                            val json = response.body()
+                            ApiInterfaceModel.instance?.apiCall(json)
+                        }
+                    }
+
+                    override fun onFailure(call: Call<JsonObject>, t: Throwable) {
+                        showToast(context, t.toString())
+                    }
+
+                })
+        } else {
+            if (userId.isNullOrEmpty() && segmentId != null) {
+                showAlertDialog(context, "Required", "user id is null or empty", "Ok") {
 
                 }
             }
+            if (userId?.isNotEmpty() == true && segmentId == null) {
+                showAlertDialog(context, "Required", "segment id is empty", "Ok") {
 
-            override fun onFailure(call: Call<JsonObject>, t: Throwable) {
-                showToast(context, t.toString())
+                }
             }
-        })
+        }
+
+
     }
 
+    @JvmStatic
+    fun storeSegmentData(
+        context: AppCompatActivity,
+        segmentModel: SegmentModel,
+        authToken: String
+    ) {
+        if (context.getSharedPreferences("renderFirstPop", MODE_PRIVATE)
+                ?.getBoolean(AppConstants.IS_POP_STATUS, false) == true
+        ) {
+            val segmentService = RetrofitService.getInstance(context)
+
+            showLog(Gson().toJson(segmentModel))
+            if (segmentModel.segment_id != null && segmentModel.fields.isNotEmpty() && !segmentModel.unique_project_id.isNullOrEmpty()) {
+                segmentService.requestCatcher("Bearer $authToken", segmentModel)
+                    .enqueue(object : Callback<String> {
+                        override fun onResponse(call: Call<String>, response: Response<String>) {
+
+                            val rawResponse = response.raw().body.toString()
+                            showLog("Raw Response: $rawResponse")
+
+                            // Handle the response here
+                            if (response.isSuccessful) {
+                                // Parse the JSON response
+                                // ...
+                                showLog("Parse the JSON response ${response.body().toString()}")
+                            } else {
+                                // Handle the error
+                                showLog("Handle the error")
+                            }
+                        }
+
+                        override fun onFailure(call: Call<String>, t: Throwable) {
+                            showLog(t.toString())
+                        }
+
+                    })
+            } else {
+                // Show toast messages for each condition not met
+                if (segmentModel.segment_id == null) {
+                    showAlertDialog(context, "Segment", "segment id is null.", "Ok") {
+
+                    }
+                }
+                if (segmentModel.fields.isEmpty()) {
+                    showAlertDialog(context, "Segment", "fields is empty", "Ok") {
+
+                    }
+                }
+                if (segmentModel.unique_project_id.isNullOrEmpty()) {
+                    showAlertDialog(
+                        context,
+                        "Segment",
+                        "unique_project_id is null or empty",
+                        "Ok"
+                    ) {
+
+                    }
+                }
+            }
+        }
+
+    }
+
+    @JvmStatic
+    private fun showAlertDialog(
+        context: Context,
+        title: String,
+        message: String,
+        positiveButtonText: String,
+        onPositiveClick: () -> Unit
+    ) {
+        MaterialAlertDialogBuilder(context)
+            .setTitle(title)
+            .setMessage(message)
+            .setCancelable(false)
+            .setPositiveButton(positiveButtonText) { dialog, which ->
+                // Call the provided positive button response
+                onPositiveClick()
+            }
+            .show()
+    }
+
+    @JvmStatic
     private fun popUp(
         context: AppCompatActivity,
         identifierDesign: ArrayList<RenderModel.IdentifierDesign>
@@ -154,29 +299,9 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
         val originalGravity = (mViewGroup.layoutParams as? FrameLayout.LayoutParams)?.gravity
 
         when (popArray[index].dialogType) {
-            AppConstants.DIALOG_TYPE.popup -> {
-                val identifierDesign: RenderModel.IdentifierDesign =
-                    popArray[index]// Your identifier design data
-                val dialogFragment = CustomDialogFragment(
-                    identifierDesign,
-                    context,
-                    originalLayoutParams,
-                    originalGravity,
-                    mViewGroup
-                )
-                dialogFragment.show(context.supportFragmentManager, "custom_dialog")
-            }
-            AppConstants.DIALOG_TYPE.bottom -> {
-                val identifierDesign: RenderModel.IdentifierDesign =
-                    popArray[index]// Your identifier design data
-                val dialogFragment = CustomDialogFragment(
-                    identifierDesign,
-                    context,
-                    originalLayoutParams,
-                    originalGravity,
-                    mViewGroup
-                )
-                dialogFragment.show(context.supportFragmentManager, "custom_dialog")
+            AppConstants.DIALOG_TYPE.popup,AppConstants.DIALOG_TYPE.bottom  -> {
+                val identifierDesign: RenderModel.IdentifierDesign = popArray[index]
+                showCustomDialog(context, identifierDesign, originalLayoutParams, originalGravity, mViewGroup)
             }
             else -> {
                 showToolTip(
@@ -190,14 +315,17 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
         }
     }
 
+    @JvmStatic
     private fun getRootViewGroup(context: AppCompatActivity): ViewGroup {
         return (context.findViewById<View>(android.R.id.content) as ViewGroup).getChildAt(0) as ViewGroup
     }
 
+    @JvmStatic
     private fun findViewByTag(viewsList: List<View>, tag: String): View? {
         return viewsList.firstOrNull { it.tag == tag }
     }
 
+    @JvmStatic
     private fun createLayoutParams(
         gravity: Int,
         rootLinear: View,
@@ -225,6 +353,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
     }
 
 
+    @JvmStatic
     @SuppressLint("Range")
     internal fun showToolTip(
         context: AppCompatActivity,
@@ -250,57 +379,69 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                 }
                 // Find the anchor view by tag
                 val anchorView = findViewByTag(viewsList, belongId)
+                val anchorTag = anchorView?.tag.toString()
+                if (anchorTag == belongId) {
+                    // Calculate the gravity based on anchor view and mViewGroup
+                    val gravity = calculateGravity(parentViewGroup, anchorView, context)
 
-                // Calculate the gravity based on anchor view and mViewGroup
-                val gravity = calculateGravity(parentViewGroup, anchorView, context)
+                    // Create layout parameters for the tooltip container
+                    createLayoutParams(gravity, linearRoot, btnSkip)
 
-                // Create layout parameters for the tooltip container
-                createLayoutParams(gravity, linearRoot, btnSkip)
-
-                // Set up views within the tooltip
-                setupViews(
-                    innerLayoutArray,
-                    dynamicLayout,
-                    context,
-                    root,
-                    originalLayoutParams,
-                    originalGravity, parentViewGroup
-                )
-
-                // Create and show the tooltip
-                tooltip =
-                    createTooltip(
+                    // Set up views within the tooltip
+                    setupViews(
+                        innerLayoutArray,
+                        dynamicLayout,
                         context,
-                        anchorView,
-                        gravity,
                         root,
-                        btnSkip.id,
-                        parentViewGroup,
                         originalLayoutParams,
-                        originalGravity
+                        originalGravity, parentViewGroup
                     )
-                tooltip?.show()
 
-                // Set click listeners for skip and cancel buttons
-                btnSkip.setOnClickListener {
-                    root.visibility = View.GONE
-                    if (tooltip?.isShowing == true) {
-                        tooltip?.dismiss()
-                        parentViewGroup.removeView(binding.root)
+                    // Create and show the tooltip
+                    tooltip =
+                        createTooltip(
+                            context,
+                            anchorView,
+                            gravity,
+                            root,
+                            btnSkip.id,
+                            parentViewGroup,
+                            originalLayoutParams,
+                            originalGravity
+                        )
+                    tooltip?.show()
+
+                    // Set click listeners for skip and cancel buttons
+                    btnSkip.setOnClickListener {
+                        root.visibility = View.GONE
+                        if (tooltip?.isShowing == true) {
+                            tooltip?.dismiss()
+                            parentViewGroup.removeView(binding.root)
+                        }
                     }
-                }
-                btnCancel.setOnClickListener {
-                    root.visibility = View.GONE
-                    if (tooltip?.isShowing == true) {
-                        tooltip?.dismiss()
-                        parentViewGroup.removeView(binding.root)
+                    btnCancel.setOnClickListener {
+                        root.visibility = View.GONE
+                        if (tooltip?.isShowing == true) {
+                            tooltip?.dismiss()
+                            parentViewGroup.removeView(binding.root)
+                        }
+                        isNextDialogTypeExist(
+                            context,
+                            originalLayoutParams,
+                            originalGravity,
+                            parentViewGroup, binding.root
+                        )
                     }
-                    isNextDialogTypeExist(
-                        context,
-                        originalLayoutParams,
-                        originalGravity,
-                        parentViewGroup, binding.root
-                    )
+                } else {
+                    Handler(Looper.myLooper()!!).postDelayed({
+                        isNextDialogTypeExist(
+                            context,
+                            originalLayoutParams,
+                            originalGravity,
+                            parentViewGroup,
+                            binding.root
+                        )
+                    }, 500)
                 }
             }
         } catch (ex: java.lang.IndexOutOfBoundsException) {
@@ -313,7 +454,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
     }
 
 
-
+    @JvmStatic
     private fun resetLayoutAndDismissTooltip(
         mViewGroup: ViewGroup,
         context: AppCompatActivity,
@@ -333,6 +474,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
         Log.d("ResetLayout", "ResetLayoutAndDismissTooltip completed")
     }
 
+    @JvmStatic
     @SuppressLint("Range")
     private fun setupViews(
         innerLayoutArray: List<RenderModel.InnerLayout>,
@@ -528,6 +670,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
 
     }
 
+    @JvmStatic
     private fun createTooltip(
         context: AppCompatActivity,
         anchorView: View?,
@@ -562,6 +705,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
 
     }
 
+    @JvmStatic
     private fun calculateGravity(
         mViewGroup: ViewGroup,
         anchorView: View?,
@@ -593,7 +737,18 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
             Gravity.TOP  //Tooltip gravity
         }
     }
-
+    @JvmStatic
+    private fun showCustomDialog(context: AppCompatActivity, identifierDesign: RenderModel.IdentifierDesign, originalLayoutParams: ViewGroup.LayoutParams?, originalGravity: Int?, mViewGroup: ViewGroup) {
+        val dialogFragment = CustomDialogFragment(
+            identifierDesign,
+            context,
+            originalLayoutParams,
+            originalGravity,
+            mViewGroup
+        )
+        dialogFragment.show(context.supportFragmentManager, "custom_dialog")
+    }
+    @JvmStatic
     private fun isNextDialogTypeExist(
         context: AppCompatActivity, originalLayoutParams: ViewGroup.LayoutParams?,
         originalGravity: Int?, mViewGroup: ViewGroup, tooltipContent: View
@@ -601,31 +756,9 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
         if (index < popArray.size - 1) {
             index++
             when (popArray[index].dialogType) {
-                AppConstants.DIALOG_TYPE.popup -> {
-                    val identifierDesign: RenderModel.IdentifierDesign =
-                        popArray[index]// Your identifier design data
-                    val dialogFragment = CustomDialogFragment(
-                        identifierDesign,
-                        context,
-                        originalLayoutParams,
-                        originalGravity,
-                        mViewGroup
-                    )
-                    dialogFragment.show(context.supportFragmentManager, "custom_dialog")
-                    // createPopup(context, popArray[index])
-                }
-                AppConstants.DIALOG_TYPE.bottom -> {
-                    val identifierDesign: RenderModel.IdentifierDesign =
-                        popArray[index]// Your identifier design data
-                    val dialogFragment = CustomDialogFragment(
-                        identifierDesign,
-                        context,
-                        originalLayoutParams,
-                        originalGravity,
-                        mViewGroup
-                    )
-                    dialogFragment.show(context.supportFragmentManager, "custom_dialog")
-                    //createPopup(context, popArray[index])
+                AppConstants.DIALOG_TYPE.popup, AppConstants.DIALOG_TYPE.bottom -> {
+                    val identifierDesign: RenderModel.IdentifierDesign = popArray[index]
+                    showCustomDialog(context, identifierDesign, originalLayoutParams, originalGravity, mViewGroup)
                 }
                 else -> {
                     showToolTip(
@@ -637,8 +770,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                     )
                 }
             }
-        }
-        else{
+        } else {
             if (tooltip?.isShowing == true) {
                 tooltip?.dismiss()
                 mViewGroup.removeView(tooltipContent)
@@ -647,6 +779,8 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
         }
     }
 
+
+    @JvmStatic
     internal fun applyFonts(
         context: AppCompatActivity, viewType: View,
         model: RenderModel.InnerLayout,
@@ -1015,7 +1149,8 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
 
     }
 
-    val tempStep: ArrayList<com.adopshun.render.database.Step> = ArrayList()
+    @JvmStatic
+    private val tempStep: ArrayList<com.adopshun.render.database.Step> = ArrayList()
 
     override fun onResponsePopup(jsonObjectModel: JsonObject?) {
 
@@ -1036,10 +1171,10 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                 val list = appDb.stepDao().getAll()
                 for (i in popupArray?.indices!!) {
                     if (popupArray[i].screenId == mLayout.toString()) {
-                        if (!list.contains(Step(popupArray[i].step))) {
+                        if (!list.contains(Step(popupArray[i].step.toString()))) {
                             appDb.stepDao()
-                                .insert(com.adopshun.render.database.Step(popupArray[i].step))
-                            tempStep.add(com.adopshun.render.database.Step(popupArray[i].step))
+                                .insert(com.adopshun.render.database.Step(popupArray[i].step.toString()))
+                            tempStep.add(com.adopshun.render.database.Step(popupArray[i].step.toString()))
                         }
                     }
                 }

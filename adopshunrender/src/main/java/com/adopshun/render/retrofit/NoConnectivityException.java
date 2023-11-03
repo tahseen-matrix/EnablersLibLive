@@ -6,6 +6,9 @@ import java.io.IOException;
 
 public class NoConnectivityException extends IOException {
 
+    /**
+     * @return
+     */
     @Nullable
     @Override
     public String getMessage() {

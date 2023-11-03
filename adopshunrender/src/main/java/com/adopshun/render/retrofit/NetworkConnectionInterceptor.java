@@ -15,6 +15,9 @@ public class NetworkConnectionInterceptor implements Interceptor {
 
     private Context mContext;
 
+    /**
+     * @param context
+     */
     public NetworkConnectionInterceptor(Context context){
         mContext = context;
     }
