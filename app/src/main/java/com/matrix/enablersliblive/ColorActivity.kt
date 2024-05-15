@@ -1,22 +1,18 @@
 package com.matrix.enablersliblive
 
 import android.graphics.Color
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.AlphaAnimation
-import android.view.animation.Animation
+import androidx.appcompat.app.AppCompatActivity
 import com.adopshun.creator.maincreator.AdopshunCreator
 import com.adopshun.render.maintask.RenderPopup
 import com.adopshun.render.model.SegmentModel
 import com.matrix.enablersliblive.databinding.ActivityColorBinding
-import com.matrix.enablersliblive.databinding.ActivityMainBinding
 
 class ColorActivity : AppCompatActivity() {
     private val binding: ActivityColorBinding by lazy {
@@ -46,16 +42,19 @@ class ColorActivity : AppCompatActivity() {
             textTv.text = builder.toString()
         }
 
+        // Enable the Up button
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.setDisplayShowHomeEnabled(true)
 
         val viewGroup =
             (findViewById<View>(android.R.id.content) as ViewGroup).getChildAt(0) as ViewGroup
         AdopshunCreator.initAdopshun(this, viewGroup)
         AdopshunCreator.initLayout(R.layout.activity_color)
-        RenderPopup.showPopups(this, R.layout.activity_color, "45",45)
+        RenderPopup.showPopups(this, R.layout.activity_color, token = Constants.token)
 
         //Store Segment Data
         if (isStoreSegmentData) {
-            RenderPopup.storeSegmentData(
+            RenderPopup.addSegmentData(
                 context =
                 this,
                 segmentModel = SegmentModel(
@@ -65,12 +64,22 @@ class ColorActivity : AppCompatActivity() {
                         "quantity" to "4"
                     )
                 ),
-                authToken = "eyJpdiI6Ikp1STRLT1ZobDFnUmhtWTJYYVZqSlE9PSIsInZhbHVlIjoieEl5U3drRUN1TU9qdzBPaWNVaU16bmh1SG8yWi8vRityc1FPZ1owUWE2OWFOaTljSVJzR0NxaUp4Nmp4anpaRCIsIm1hYyI6IjA5MDc4ZTc3MTI4MDg3MjE2ZWYxNjhlYjUxOTA0NDVjNjZiNmExNzc4ZWQ1YTllMmE2MDk5YjMxMjNlZjEwY2UiLCJ0YWciOiIifQ=="
+                authToken = Constants.token
             )
         }
 
         }
 
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                // Handle the Up button click
+                onBackPressed()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
 
     override fun onResume() {
         super.onResume()

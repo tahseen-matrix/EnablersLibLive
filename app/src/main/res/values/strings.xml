@@ -1,3 +1,10 @@
 <resources>
-    <string name="app_name">EnablersLibLive</string>
+    <string name="app_name">Enablers Live</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="login">Login</string>
+    <string name="welcome_back">Welcome Back</string>
+    <string name="logout">Logout</string>
+    <string name="cart">Cart</string>
+    <string name="checkout">Checkout</string>
 </resources>

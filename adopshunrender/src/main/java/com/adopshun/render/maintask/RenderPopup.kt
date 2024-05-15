@@ -42,7 +42,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -74,14 +74,14 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
     var tooltip: SimpleTooltip? = null
 
 
+    @OptIn(DelicateCoroutinesApi::class)
     @JvmStatic
     @JvmOverloads
     @SuppressLint("InvalidAnalyticsName")
     fun checkFirstRun(
         context: AppCompatActivity,
         layout: Int,
-        userId: String? = null,
-        segmentId: Int? = null
+        userId: String? = null, token: String
     ) {
         val builder = AlertDialog.Builder(context)
         builder.setMessage("Do you want to show onboarding?")
@@ -95,19 +95,19 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
             mLayout = layout
             mContext = context
             appDb = AppDatabase.getDatabase(context)
-            GlobalScope.launch(Dispatchers.IO) {
+            GlobalScope.launch(DefaultDispatcherProvider().io()) {
                 appDb.stepDao().clearStep()
             }
 
             Handler(Looper.myLooper()!!).postDelayed({
                 index = 0
-                ApiInterfaceModel.instance!!.setListener(this)
-                getPops(context, context.packageName, userId, segmentId)
+                ApiInterfaceModel.instance?.setListener(this)
+                getPops(context, context.packageName, userId, token)
             }, 500)
 
 
         }
-        builder.setNegativeButton("No") { dialog, which ->
+        builder.setNegativeButton("No") { _, _ ->
             context.getSharedPreferences("renderFirstPop", MODE_PRIVATE)?.edit()
                 ?.putBoolean(AppConstants.IS_POP_STATUS, false)?.apply()
             context.getSharedPreferences("renderFirstPop", MODE_PRIVATE)?.edit()
@@ -123,13 +123,12 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
     fun showPopups(
         context: AppCompatActivity,
         layout: Int,
-        userId: String? = null,
-        segmentId: Int? = null
+        userId: String? = null, token: String
     ) {
         if (context.getSharedPreferences("renderFirstPop", MODE_PRIVATE)
                 ?.getBoolean(AppConstants.IS_FIRST_RUN, false) == false
         ) {
-            checkFirstRun(context, layout, userId, segmentId)
+            checkFirstRun(context, layout, userId, token = token)
         }
         if (context.getSharedPreferences("renderFirstPop", MODE_PRIVATE)
                 ?.getBoolean(AppConstants.IS_POP_STATUS, false) == true
@@ -141,30 +140,27 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
             Handler(Looper.myLooper()!!).postDelayed({
                 index = 0
                 ApiInterfaceModel.instance?.setListener(this)
-                getPops(context, context.packageName, userId, segmentId)
+                getPops(context, context.packageName, userId, token = token)
             }, 500)
         }
 
     }
 
-    @JvmOverloads
     @JvmStatic
     private fun getPops(
         context: AppCompatActivity,
         applicationId: String,
-        userId: String? = null,
-        segmentId: Int? = null
+        userId: String? = null, token: String
     ) {
 
         showLog(applicationId)
         val service = RetrofitService.getInstance(context)
-        if (userId.isNullOrEmpty() && segmentId == null) {
-            service.getJson(applicationId).enqueue(object : Callback<JsonObject> {
+        if (userId.isNullOrEmpty()) {
+            service.getJson(applicationId, authToken="Bearer $token" ).enqueue(object : Callback<JsonObject> {
                 override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
                     if (response.isSuccessful) {
                         val json = response.body()
                         ApiInterfaceModel.instance?.apiCall(json)
-
                     }
                 }
 
@@ -172,8 +168,9 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                     showToast(context, t.toString())
                 }
             })
-        } else if (userId?.isNotEmpty() == true && segmentId != null) {
-            service.getJsonWithUserId(applicationId, userId.toString())
+        }
+        else if (userId.isNotEmpty()) {
+            service.getJsonWithUserId(applicationId, userId.toString(), authToken = "Bearer $token")
                 .enqueue(object : Callback<JsonObject> {
                     override fun onResponse(
                         call: Call<JsonObject>,
@@ -190,24 +187,12 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                     }
 
                 })
-        } else {
-            if (userId.isNullOrEmpty() && segmentId != null) {
-                showAlertDialog(context, "Required", "user id is null or empty", "Ok") {
-
-                }
-            }
-            if (userId?.isNotEmpty() == true && segmentId == null) {
-                showAlertDialog(context, "Required", "segment id is empty", "Ok") {
-
-                }
-            }
         }
-
 
     }
 
     @JvmStatic
-    fun storeSegmentData(
+    fun addSegmentData(
         context: AppCompatActivity,
         segmentModel: SegmentModel,
         authToken: String
@@ -242,24 +227,23 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                         }
 
                     })
-            } else {
+            }
+            else {
                 // Show toast messages for each condition not met
                 if (segmentModel.segment_id == null) {
-                    showAlertDialog(context, "Segment", "segment id is null.", "Ok") {
+                    showAlertDialog(context,"segment id is null.") {
 
                     }
                 }
                 if (segmentModel.fields.isEmpty()) {
-                    showAlertDialog(context, "Segment", "fields is empty", "Ok") {
+                    showAlertDialog(context, "fields is empty") {
 
                     }
                 }
                 if (segmentModel.unique_project_id.isNullOrEmpty()) {
                     showAlertDialog(
                         context,
-                        "Segment",
-                        "unique_project_id is null or empty",
-                        "Ok"
+                        "unique_project_id is null or empty"
                     ) {
 
                     }
@@ -272,16 +256,14 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
     @JvmStatic
     private fun showAlertDialog(
         context: Context,
-        title: String,
         message: String,
-        positiveButtonText: String,
         onPositiveClick: () -> Unit
     ) {
         MaterialAlertDialogBuilder(context)
-            .setTitle(title)
+            .setTitle("Segment")
             .setMessage(message)
             .setCancelable(false)
-            .setPositiveButton(positiveButtonText) { dialog, which ->
+            .setPositiveButton("Ok") { _, _ ->
                 // Call the provided positive button response
                 onPositiveClick()
             }
@@ -509,7 +491,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
 
                     dynamicLayout.addView(title)
 
-                    if (innerLayoutArray[j].bottomMargin !== null) {
+                    if (innerLayoutArray[j].bottomMargin.isNotEmpty()) {
                         paramsText.setMargins(
                             20,
                             10,
@@ -517,7 +499,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                             innerLayoutArray[j].bottomMargin.toInt()
                         )
                     }
-                    if (innerLayoutArray[j].topMargin !== null) {
+                    if (innerLayoutArray[j].topMargin.isNotEmpty()) {
                         paramsText.setMargins(
                             20,
                             innerLayoutArray[j].topMargin.toInt(),
@@ -648,9 +630,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                         )
                         if (innerLayoutArray[j].buttonUrl.isNotEmpty()) {
                             Handler(Looper.myLooper()!!).postDelayed({
-                                val URL_REGEX =
-                                    "^((https?|ftp)://|(www|ftp)\\.)?[a-z0-9-]+(\\.[a-z0-9-]+)+([/?].*)?$"
-                                val p: Pattern = Pattern.compile(URL_REGEX)
+                                val p: Pattern = Pattern.compile(AppConstants.REG_EX)
                                 val m: Matcher = p.matcher(innerLayoutArray[j].buttonUrl)
                                 if (m.find()) {
                                     val browserIntent =
@@ -786,365 +766,239 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
         model: RenderModel.InnerLayout,
     ) {
 
-        if (model.fontFamily !== null) {
-            if (model.fontFamily.contains("Open Sans")) {
+        if (model.fontFamily.isNotEmpty()) {
+            when{
+                model.fontFamily.contains("Poppins")->{
+                    if (viewType is AppCompatTextView) {
 
-                if (viewType is AppCompatTextView) {
+                        when (model.fontWeight) {
+                            AppConstants.FONT_WEIGHT.BOLD, AppConstants.FONT_WEIGHT.SEMIBOLD-> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.poppins_bold)
 
-                    when (model.fontWeight) {
-                        AppConstants.FONT_WEIGHT.REGULAR -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_regular)
+                            }
+                            AppConstants.FONT_WEIGHT.LIGHT -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.poppins_light)
 
+                            }
+                            AppConstants.FONT_WEIGHT.MEDIUM -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.poppins_medium)
+
+                            }
+                            else -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.poppins_regular)
+
+                            }
                         }
-                        AppConstants.FONT_WEIGHT.BOLD -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_bold)
 
-                        }
-                        AppConstants.FONT_WEIGHT.LIGHT -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_light)
 
-                        }
-                        AppConstants.FONT_WEIGHT.MEDIUM -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_medium)
-
-                        }
-                        AppConstants.FONT_WEIGHT.SEMIBOLD -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_semibold)
-
-                        }
-                        else -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_regular)
-
-                        }
                     }
+                    if (viewType is AppCompatButton) {
+                        when (model.fontWeight) {
+                            AppConstants.FONT_WEIGHT.BOLD ,AppConstants.FONT_WEIGHT.SEMIBOLD -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.poppins_bold)
 
+                            }
+                            AppConstants.FONT_WEIGHT.LIGHT -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.poppins_light)
 
-                }
-                if (viewType is AppCompatButton) {
-                    when (model.fontWeight) {
-                        AppConstants.FONT_WEIGHT.REGULAR -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_regular)
+                            }
+                            AppConstants.FONT_WEIGHT.MEDIUM -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.poppins_medium)
 
-                        }
-                        AppConstants.FONT_WEIGHT.BOLD -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_bold)
+                            }
+                            else -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.poppins_regular)
 
-                        }
-                        AppConstants.FONT_WEIGHT.LIGHT -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_light)
-
-                        }
-                        AppConstants.FONT_WEIGHT.MEDIUM -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_medium)
-
-                        }
-                        AppConstants.FONT_WEIGHT.SEMIBOLD -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_semibold)
-
-                        }
-                        else -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_regular)
+                            }
                         }
                     }
                 }
-            } else if (model.fontFamily.contains("Poppins")) {
-                if (viewType is AppCompatTextView) {
+                model.fontFamily.contains("Roboto")->{
+                    if (viewType is AppCompatTextView) {
 
-                    when (model.fontWeight) {
-                        AppConstants.FONT_WEIGHT.REGULAR -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.poppins_regular)
+                        when (model.fontWeight) {
+                            AppConstants.FONT_WEIGHT.REGULAR -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.roboto_regular)
 
+                            }
+                            AppConstants.FONT_WEIGHT.BOLD -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.roboto_bold)
+
+                            }
+                            AppConstants.FONT_WEIGHT.LIGHT -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.roboto_light)
+
+                            }
+                            AppConstants.FONT_WEIGHT.MEDIUM, AppConstants.FONT_WEIGHT.SEMIBOLD -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.roboto_medium)
+
+                            }
+                            else -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.roboto_italic)
+
+                            }
                         }
-                        AppConstants.FONT_WEIGHT.BOLD -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.poppins_bold)
 
-                        }
-                        AppConstants.FONT_WEIGHT.LIGHT -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.poppins_light)
 
-                        }
-                        AppConstants.FONT_WEIGHT.MEDIUM -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.poppins_medium)
-
-                        }
-                        AppConstants.FONT_WEIGHT.SEMIBOLD -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.poppins_bold)
-
-                        }
-                        else -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.poppins_regular)
-
-                        }
                     }
+                    if (viewType is AppCompatButton) {
+                        when (model.fontWeight) {
+                            AppConstants.FONT_WEIGHT.REGULAR -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.roboto_regular)
 
+                            }
+                            AppConstants.FONT_WEIGHT.BOLD -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.roboto_bold)
 
-                }
-                if (viewType is AppCompatButton) {
-                    when (model.fontWeight) {
-                        AppConstants.FONT_WEIGHT.REGULAR -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.poppins_regular)
+                            }
+                            AppConstants.FONT_WEIGHT.LIGHT -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.roboto_light)
 
-                        }
-                        AppConstants.FONT_WEIGHT.BOLD -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.poppins_bold)
+                            }
+                            AppConstants.FONT_WEIGHT.MEDIUM, AppConstants.FONT_WEIGHT.SEMIBOLD -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.roboto_medium)
 
-                        }
-                        AppConstants.FONT_WEIGHT.LIGHT -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.poppins_light)
+                            }
 
-                        }
-                        AppConstants.FONT_WEIGHT.MEDIUM -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.poppins_medium)
+                            else -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.roboto_italic)
 
-                        }
-                        AppConstants.FONT_WEIGHT.SEMIBOLD -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.poppins_bold)
-
-                        }
-                        else -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.poppins_regular)
-
+                            }
                         }
                     }
                 }
-            } else if (model.fontFamily.contains("Roboto")) {
-                if (viewType is AppCompatTextView) {
+                model.fontFamily.contains("circulamedium")->{
+                    if (viewType is AppCompatTextView) {
+                        when (model.fontWeight) {
+                            AppConstants.FONT_WEIGHT.BOLD -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.circula_bold)
 
-                    when (model.fontWeight) {
-                        AppConstants.FONT_WEIGHT.REGULAR -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.roboto_regular)
+                            }
+                            AppConstants.FONT_WEIGHT.LIGHT -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.circula_light)
 
-                        }
-                        AppConstants.FONT_WEIGHT.BOLD -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.roboto_bold)
+                            }
+                            AppConstants.FONT_WEIGHT.MEDIUM, AppConstants.FONT_WEIGHT.SEMIBOLD -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.circula_medium)
 
-                        }
-                        AppConstants.FONT_WEIGHT.LIGHT -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.roboto_light)
+                            }
+                            else -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.circula_regular)
 
-                        }
-                        AppConstants.FONT_WEIGHT.MEDIUM -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.roboto_medium)
-
-                        }
-                        AppConstants.FONT_WEIGHT.SEMIBOLD -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.roboto_medium)
-
-                        }
-                        else -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.roboto_italic)
-
+                            }
                         }
                     }
+                    if (viewType is AppCompatButton) {
+                        when (model.fontWeight) {
+                            AppConstants.FONT_WEIGHT.BOLD -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.circula_bold)
 
+                            }
+                            AppConstants.FONT_WEIGHT.LIGHT -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.circula_light)
 
-                }
-                if (viewType is AppCompatButton) {
-                    when (model.fontWeight) {
-                        AppConstants.FONT_WEIGHT.REGULAR -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.roboto_regular)
+                            }
+                            AppConstants.FONT_WEIGHT.MEDIUM ,  AppConstants.FONT_WEIGHT.SEMIBOLD -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.circula_medium)
 
-                        }
-                        AppConstants.FONT_WEIGHT.BOLD -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.roboto_bold)
+                            }
+                            else -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.circula_regular)
 
-                        }
-                        AppConstants.FONT_WEIGHT.LIGHT -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.roboto_light)
-
-                        }
-                        AppConstants.FONT_WEIGHT.MEDIUM -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.roboto_medium)
-
-                        }
-                        AppConstants.FONT_WEIGHT.SEMIBOLD -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.roboto_medium)
-
-                        }
-                        else -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.roboto_italic)
-
+                            }
                         }
                     }
                 }
-            } else if (model.fontFamily.contains("circulamedium")) {
-                if (viewType is AppCompatTextView) {
-                    when (model.fontWeight) {
-                        AppConstants.FONT_WEIGHT.REGULAR -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.circula_regular)
+                else->{
+                    if (viewType is AppCompatTextView) {
+                        when (model.fontWeight) {
+                            AppConstants.FONT_WEIGHT.BOLD -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.opensans_bold)
 
-                        }
-                        AppConstants.FONT_WEIGHT.BOLD -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.circula_bold)
+                            }
+                            AppConstants.FONT_WEIGHT.LIGHT -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.opensans_light)
 
-                        }
-                        AppConstants.FONT_WEIGHT.LIGHT -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.circula_light)
+                            }
+                            AppConstants.FONT_WEIGHT.MEDIUM -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.opensans_medium)
 
-                        }
-                        AppConstants.FONT_WEIGHT.MEDIUM -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.circula_medium)
+                            }
+                            AppConstants.FONT_WEIGHT.SEMIBOLD -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.opensans_semibold)
 
-                        }
-                        AppConstants.FONT_WEIGHT.SEMIBOLD -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.circula_medium)
+                            }
+                            else -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.opensans_regular)
 
+                            }
                         }
-                        else -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.circula_regular)
 
-                        }
+
                     }
-                }
-                if (viewType is AppCompatButton) {
-                    when (model.fontWeight) {
-                        AppConstants.FONT_WEIGHT.REGULAR -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.circula_regular)
+                    if (viewType is AppCompatButton) {
+                        when (model.fontWeight) {
+                            AppConstants.FONT_WEIGHT.BOLD -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.opensans_bold)
 
-                        }
-                        AppConstants.FONT_WEIGHT.BOLD -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.circula_bold)
+                            }
+                            AppConstants.FONT_WEIGHT.LIGHT -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.opensans_light)
 
-                        }
-                        AppConstants.FONT_WEIGHT.LIGHT -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.circula_light)
+                            }
+                            AppConstants.FONT_WEIGHT.MEDIUM -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.opensans_medium)
 
-                        }
-                        AppConstants.FONT_WEIGHT.MEDIUM -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.circula_medium)
+                            }
+                            AppConstants.FONT_WEIGHT.SEMIBOLD -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.opensans_semibold)
 
-                        }
-                        AppConstants.FONT_WEIGHT.SEMIBOLD -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.circula_medium)
+                            }
+                            else -> {
+                                viewType.typeface =
+                                    ResourcesCompat.getFont(context, R.font.opensans_regular)
 
-                        }
-                        else -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.circula_regular)
-
-                        }
-                    }
-                }
-            } else {
-                if (viewType is AppCompatTextView) {
-
-                    when (model.fontWeight) {
-                        AppConstants.FONT_WEIGHT.REGULAR -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_regular)
-
-                        }
-                        AppConstants.FONT_WEIGHT.BOLD -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_bold)
-
-                        }
-                        AppConstants.FONT_WEIGHT.LIGHT -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_light)
-
-                        }
-                        AppConstants.FONT_WEIGHT.MEDIUM -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_medium)
-
-                        }
-                        AppConstants.FONT_WEIGHT.SEMIBOLD -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_semibold)
-
-                        }
-                        else -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_regular)
-
-                        }
-                    }
-
-
-                }
-                if (viewType is AppCompatButton) {
-                    when (model.fontWeight) {
-                        AppConstants.FONT_WEIGHT.REGULAR -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_regular)
-
-                        }
-                        AppConstants.FONT_WEIGHT.BOLD -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_bold)
-
-                        }
-                        AppConstants.FONT_WEIGHT.LIGHT -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_light)
-
-                        }
-                        AppConstants.FONT_WEIGHT.MEDIUM -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_medium)
-
-                        }
-                        AppConstants.FONT_WEIGHT.SEMIBOLD -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_semibold)
-
-                        }
-                        else -> {
-                            viewType.typeface =
-                                ResourcesCompat.getFont(context, R.font.opensans_regular)
-
+                            }
                         }
                     }
                 }
             }
+
         }
 
     }
@@ -1152,6 +1006,7 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
     @JvmStatic
     private val tempStep: ArrayList<com.adopshun.render.database.Step> = ArrayList()
 
+    @OptIn(DelicateCoroutinesApi::class)
     override fun onResponsePopup(jsonObjectModel: JsonObject?) {
 
         Log.d("ResponseData", jsonObjectModel.toString())
@@ -1161,40 +1016,39 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
             val gson: Gson = GsonBuilder().serializeNulls().create()
 
             val jsonModel = gson.fromJson(jsonObjectModel, RenderModel::class.java)
-            val popupArray = jsonModel.data.identifierDesign
+            val popupArray: List<RenderModel.IdentifierDesign> = jsonModel.data.identifierDesign
             val tempArray: ArrayList<RenderModel.IdentifierDesign> = ArrayList()
 
 
             tempStep.clear()
             Log.d("ResponseDataFIREBASE", jsonModel.gaDetails?.applicationId.toString())
-            GlobalScope.launch(Dispatchers.IO) {
-                val list = appDb.stepDao().getAll()
-                for (i in popupArray?.indices!!) {
-                    if (popupArray[i].screenId == mLayout.toString()) {
-                        if (!list.contains(Step(popupArray[i].step.toString()))) {
+            if (popupArray.isNotEmpty()){
+                GlobalScope.launch(DefaultDispatcherProvider().io()) {
+                    val list = appDb.stepDao().getAll()
+                    for (i in popupArray.indices) {
+                        if (popupArray[i].screenId == mLayout.toString() && !list.contains(Step(popupArray[i].step.toString()))) {
                             appDb.stepDao()
                                 .insert(com.adopshun.render.database.Step(popupArray[i].step.toString()))
                             tempStep.add(com.adopshun.render.database.Step(popupArray[i].step.toString()))
                         }
                     }
-                }
 
-                for (i in popupArray.indices) {
-                    for (j in tempStep.indices) {
-                        if (popupArray[i].step == tempStep[j].stepNo) {
-                            tempArray.add(popupArray[i])
+                    for (i in popupArray.indices) {
+                        for (j in tempStep.indices) {
+                            if (popupArray[i].step.toString() == tempStep[j].stepNo) {
+                                tempArray.add(popupArray[i])
+                            }
                         }
                     }
-                }
 
-                if (tempArray.size > 0) {
-                    mContext?.runOnUiThread {
-                        popUp(mContext!!, tempArray)
+                    if (tempArray.isNotEmpty()) {
+                        mContext?.runOnUiThread {
+                            popUp(mContext!!, tempArray)
+                        }
                     }
+
                 }
-
             }
-
         }
     }
 

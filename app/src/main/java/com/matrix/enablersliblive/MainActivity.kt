@@ -1,6 +1,10 @@
 package com.matrix.enablersliblive
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
@@ -8,7 +12,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import com.adopshun.creator.maincreator.AdopshunCreator
 import com.adopshun.render.maintask.RenderPopup
-import com.adopshun.render.model.SegmentModel
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.matrix.enablersliblive.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -16,15 +20,7 @@ class MainActivity : AppCompatActivity() {
         ActivityMainBinding.inflate(layoutInflater)
     }
 
-    private var mAdapter: RecyclerAdapter? = null
     private var mAdapter1: RecyclerAdapter? = null
-    private val isStoreSegmentData: Boolean = false
-    private val list = listOf(
-        R.drawable.img_plant_2,
-        R.drawable.img_plant_9,
-        R.drawable.img_plant_4,
-        R.drawable.img_plant_9
-    )
     private val list1 = listOf(
         R.drawable.img_plant_2,
         R.drawable.img_plant_9,
@@ -38,6 +34,10 @@ class MainActivity : AppCompatActivity() {
         R.drawable.img_plant_9,
         R.drawable.img_plant_4
     )
+    companion object{
+        var selectedIdList = ""
+        var userId:Int = -1
+    }
     private var lastBackPressTime = 0L
     private val callback = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
@@ -55,15 +55,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
+
+        supportActionBar?.title = selectedIdList
         // Add the callback to the activity's OnBackPressedDispatcher
         onBackPressedDispatcher.addCallback(this, callback)
 
-        mAdapter = RecyclerAdapter(list.toMutableList(), this)
         mAdapter1 = RecyclerAdapter(list1.toMutableList(), this)
-        binding.rvImagae.adapter = mAdapter
         binding.rvImagae2.adapter = mAdapter1
 
         val viewGroup =
@@ -71,7 +72,15 @@ class MainActivity : AppCompatActivity() {
         AdopshunCreator.initAdopshun(this, viewGroup)
         AdopshunCreator.initLayout(R.layout.activity_main)
 
-        RenderPopup.showPopups(this, R.layout.activity_main, userId = "45", 45)
+        when(userId){
+            301, 302->{
+                RenderPopup.showPopups(this, R.layout.activity_main, userId= userId.toString(), token = Constants.token)
+            }
+            else->{
+                RenderPopup.showPopups(this, R.layout.activity_main, token = Constants.token)
+            }
+        }
+
         binding.navigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.navigation_home -> {
@@ -84,27 +93,62 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        //Store Segment Data
-        if (isStoreSegmentData) {
-            RenderPopup.storeSegmentData(
-                context =
-                this,
-                segmentModel = SegmentModel(
-                    segment_id = 46, unique_project_id = packageName.toString(), fields = mapOf(
-                        "user_id" to "45",
-                        "products" to "445",
-                        "amount" to "4"
-                    )
-                ),
-                authToken = "eyJpdiI6Ikp1STRLT1ZobDFnUmhtWTJYYVZqSlE9PSIsInZhbHVlIjoieEl5U3drRUN1TU9qdzBPaWNVaU16bmh1SG8yWi8vRityc1FPZ1owUWE2OWFOaTljSVJzR0NxaUp4Nmp4anpaRCIsIm1hYyI6IjA5MDc4ZTc3MTI4MDg3MjE2ZWYxNjhlYjUxOTA0NDVjNjZiNmExNzc4ZWQ1YTllMmE2MDk5YjMxMjNlZjEwY2UiLCJ0YWciOiIifQ=="
-            )
-        }
 
     }
 
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.cart_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_cart -> {
+                // Handle cart item click
+                startActivity(Intent(this@MainActivity, CartActivity::class.java))
+                true
+            }
+            R.id.action_logout -> {
+                showAlertDialog(this@MainActivity){
+                    // Start the login activity
+                    selectedIdList = ""
+                    userId = -1
+                    val intent = Intent(this, LoginActivity::class.java)
+                    startActivity(intent)
+                    finish()  // Close the current activity
+                }
+
+                true
+            }
+            // Add other menu items handling if needed
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun showAlertDialog(
+        context: Context,
+        onPositiveClick: () -> Unit
+    ) {
+        MaterialAlertDialogBuilder(context)
+            .setTitle("Logout")
+            .setMessage("Are you sure you want to logout?")
+            .setCancelable(false)
+            .setNegativeButton("Cancel"){_,_->}
+            .setPositiveButton("Logout") { _, _ ->
+                // Call the provided positive button response
+                onPositiveClick()
+            }
+            .show()
+    }
 
     override fun onResume() {
         super.onResume()
         AdopshunCreator.initLayout(R.layout.activity_main)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        selectedIdList = ""
+        userId = -1
     }
 }

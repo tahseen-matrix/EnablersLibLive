@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:padding="16dp">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/restaurantDetailImageView"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:elevation="@dimen/_2sdp"
+        android:src="@drawable/img_plant_4"
+       />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/restaurantDetailNameTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/restaurantDetailImageView"
+        android:layout_marginTop="16dp"
+        android:text="Pot Name"
+        android:textSize="20sp"
+        android:textStyle="bold"/>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/restaurantDetailCuisineTypeTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/restaurantDetailNameTextView"
+        android:layout_marginTop="4dp"
+        android:text="Pot Type"
+        android:textSize="16sp"/>
+
+    <androidx.appcompat.widget.AppCompatRatingBar
+        android:id="@+id/restaurantDetailRatingBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/restaurantDetailCuisineTypeTextView"
+        android:layout_marginTop="4dp"
+        android:numStars="5"
+        android:stepSize="0.5"/>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/restaurantDetailPriceRangeTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/restaurantDetailCuisineTypeTextView"
+        android:layout_toEndOf="@id/restaurantDetailRatingBar"
+        android:layout_marginStart="8dp"
+        android:text="$$"
+        android:textSize="16sp"/>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/restaurantDetailDescriptionTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/restaurantDetailRatingBar"
+        android:layout_marginTop="16dp"
+        android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam vestibulum turpis eu ex convallis, id fringilla mi pharetra. Donec et odio vulputate, facilisis nisl nec, scelerisque justo. Suspendisse ac ultricies velit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas."
+        android:textSize="16sp"/>
+
+</RelativeLayout>

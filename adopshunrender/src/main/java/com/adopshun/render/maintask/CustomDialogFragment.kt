@@ -16,7 +16,6 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import androidx.appcompat.app.AppCompatActivity
@@ -121,7 +120,7 @@ class CustomDialogFragment(
                     )
 
 
-                    if (innerLayout.bottomMargin !== null) {
+                    if (innerLayout.bottomMargin.isNotEmpty()) {
                         params.setMargins(
                             20,
                             -50,
@@ -130,7 +129,7 @@ class CustomDialogFragment(
                         )
                     }
 
-                    if (innerLayout.topMargin !== null) {
+                    if (innerLayout.topMargin.isNotEmpty()) {
                         params.setMargins(
                             20,
                             -50,
@@ -277,7 +276,7 @@ class CustomDialogFragment(
                         if (index < popArray.size - 1) {
                             index++
                             when (popArray[index].dialogType) {
-                                AppConstants.DIALOG_TYPE.popup -> {
+                                AppConstants.DIALOG_TYPE.popup , AppConstants.DIALOG_TYPE.bottom -> {
                                     dismiss()
                                     val identifierDesign: RenderModel.IdentifierDesign =
                                         popArray[index] // Your identifier design data
@@ -285,20 +284,6 @@ class CustomDialogFragment(
                                         identifierDesign,
                                         RenderPopup.mContext!!
                                     , originalLayoutParams, originalGravity, mViewGroup)
-                                    dialogFragment.show(
-                                        RenderPopup.mContext?.supportFragmentManager!!,
-                                        "custom_dialog"
-                                    )
-                                }
-                                AppConstants.DIALOG_TYPE.bottom -> {
-                                    // When you want to show the dialog
-                                    dismiss()
-                                    val identifierDesign: RenderModel.IdentifierDesign =
-                                        popArray[index] // Your identifier design data
-                                    val dialogFragment = CustomDialogFragment(
-                                        identifierDesign,
-                                        RenderPopup.mContext!!
-                                    ,originalLayoutParams, originalGravity, mViewGroup)
                                     dialogFragment.show(
                                         RenderPopup.mContext?.supportFragmentManager!!,
                                         "custom_dialog"
@@ -315,9 +300,7 @@ class CustomDialogFragment(
                         }
                         if (innerLayout.buttonUrl.isNotEmpty()) {
                             Handler(Looper.myLooper()!!).postDelayed({
-                                val URL_REGEX =
-                                    "^((https?|ftp)://|(www|ftp)\\.)?[a-z0-9-]+(\\.[a-z0-9-]+)+([/?].*)?$"
-                                val p: Pattern = Pattern.compile(URL_REGEX)
+                                val p: Pattern = Pattern.compile(AppConstants.REG_EX)
                                 val m: Matcher = p.matcher(innerLayout.buttonUrl)
                                 if (m.find()) {
                                     val browserIntent =

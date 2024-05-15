@@ -77,11 +77,11 @@ interface RetrofitService {
 
     /***------------2--------------------**/
     @GET("project-details/{project_id}")
-    fun getJson(@Path("project_id") project_id: String): Call<JsonObject>
+    fun getJson(@Path("project_id") project_id: String, @Header("Authorization") authToken: String): Call<JsonObject>
 
 
     @GET("project-details/{unique_project_id}/{user_id}")
-    fun getJsonWithUserId(@Path("unique_project_id") unique_project_id:String, @Path("user_id") user_id:String ): Call<JsonObject>
+    fun getJsonWithUserId(@Path("unique_project_id") unique_project_id:String, @Path("user_id") user_id:String ,  @Header("Authorization") authToken: String): Call<JsonObject>
 
     @POST("store-segment-data")
     fun requestCatcher(

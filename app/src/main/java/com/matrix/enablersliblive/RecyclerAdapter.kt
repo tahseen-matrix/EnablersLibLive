@@ -5,8 +5,10 @@ package com.matrix.enablersliblive
  */
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.os.bundleOf
 import androidx.recyclerview.widget.RecyclerView
 import com.matrix.enablersliblive.databinding.RowHorizontalBinding
 
@@ -27,7 +29,10 @@ class RecyclerAdapter(
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
         holder.bind(arrayList[position])
         holder.itemBinding.root.setOnClickListener {
-            mContext.startActivity(Intent(mContext,ColorActivity::class.java))
+            val intent = Intent(mContext, DeatilActivity::class.java)
+
+            mContext.startActivity(intent)
+
         }
     }
 
@@ -36,7 +41,7 @@ class RecyclerAdapter(
     }
 
     class MyViewHolder(
-         val itemBinding: RowHorizontalBinding
+        val itemBinding: RowHorizontalBinding
     ) : RecyclerView.ViewHolder(itemBinding.root) {
         fun bind(data: Int) {
             itemBinding.ivImage.setImageResource(data)

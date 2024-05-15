@@ -7,36 +7,32 @@
     android:background="@color/white"
     tools:context=".MainActivity">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvImagae"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:listitem="@layout/row_horizontal" />
 
     <TextView
         android:id="@+id/tvRest"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="20dp"
-        android:text="ALL RESTAURANTS"
-        app:layout_constraintStart_toStartOf="@id/rvImagae"
-        app:layout_constraintTop_toBottomOf="@id/rvImagae" />
+        android:layout_marginVertical="@dimen/_8sdp"
+       android:layout_marginHorizontal="@dimen/_8sdp"
+        android:text="ALL POTS"
+        android:fontFamily="sans-serif-condensed-light"
+        android:textSize="@dimen/_14sdp"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvImagae2"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="@dimen/_8sdp"
         android:orientation="vertical"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintBottom_toTopOf="@id/navigation"
         app:layout_constraintTop_toBottomOf="@id/tvRest"
-        app:layout_constraintEnd_toEndOf="@id/rvImagae"
-        app:layout_constraintStart_toStartOf="@id/rvImagae"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         tools:listitem="@layout/row_horizontal" />
 
 
