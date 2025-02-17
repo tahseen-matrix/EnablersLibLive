@@ -120,7 +120,7 @@ class CustomDialogFragment(
                     )
 
 
-                    if (innerLayout.bottomMargin.isNotEmpty()) {
+                    if (innerLayout.bottomMargin?.isNotEmpty() == true) {
                         params.setMargins(
                             20,
                             -50,
@@ -129,7 +129,7 @@ class CustomDialogFragment(
                         )
                     }
 
-                    if (innerLayout.topMargin.isNotEmpty()) {
+                    if (innerLayout.topMargin?.isNotEmpty() == true) {
                         params.setMargins(
                             20,
                             -50,
@@ -264,8 +264,8 @@ class CustomDialogFragment(
                     button.textAlignment = View.TEXT_ALIGNMENT_CENTER
 
                     params.setMargins(
-                        30, context.dpToPx(innerLayout.topMargin.toInt() + 10), 30,
-                        context.dpToPx(innerLayout.bottomMargin.toInt() + 10)
+                        30, context.dpToPx((innerLayout.topMargin?.toInt()?:8) + 10), 30,
+                        context.dpToPx((innerLayout.bottomMargin?.toInt()?:8) + 10)
                     )
 
                     button.layoutParams = params

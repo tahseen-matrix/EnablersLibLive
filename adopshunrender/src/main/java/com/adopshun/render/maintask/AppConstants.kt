@@ -2,7 +2,7 @@ package com.adopshun.render.maintask
 
 object AppConstants {
 
-    const val BASE_URL = "https://adopshun.matrixm.io/api/" //"https://adopshun.com/api/"  "
+    const val BASE_URL = "https://adopshun.com/api/"  //"https://adopshun.matrixm.io/api/"
     const val SEGMENT_BASE_URL =
         "https://testoct.requestcatcher.com/"// ""https://adopshun.matrixm.io/api/"
 

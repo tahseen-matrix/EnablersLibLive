@@ -138,11 +138,11 @@ class RenderModel {
     inner class InnerLayout{
         @SerializedName("top_margin")
         @Expose
-         val topMargin: String = ""
+         val topMargin: String? = null
 
         @SerializedName("bottom_margin")
         @Expose
-         val bottomMargin: String = ""
+         val bottomMargin: String?= null
 
         @SerializedName("imageUrl")
         @Expose

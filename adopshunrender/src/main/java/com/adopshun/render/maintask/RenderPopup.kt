@@ -491,18 +491,18 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
 
                     dynamicLayout.addView(title)
 
-                    if (innerLayoutArray[j].bottomMargin.isNotEmpty()) {
+                    if (innerLayoutArray[j].bottomMargin?.isNotEmpty() == true) {
                         paramsText.setMargins(
                             20,
                             10,
                             20,
-                            innerLayoutArray[j].bottomMargin.toInt()
+                            innerLayoutArray[j].bottomMargin?.toInt()?:8
                         )
                     }
-                    if (innerLayoutArray[j].topMargin.isNotEmpty()) {
+                    if (innerLayoutArray[j].topMargin?.isNotEmpty() == true) {
                         paramsText.setMargins(
                             20,
-                            innerLayoutArray[j].topMargin.toInt(),
+                            innerLayoutArray[j].topMargin?.toInt()?:8,
                             20,
                             10
                         )
@@ -600,9 +600,9 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
 
                     params.setMargins(
                         0,
-                        innerLayoutArray[j].topMargin.toInt(),
+                        innerLayoutArray[j].topMargin?.toInt()?:8,
                         0,
-                        innerLayoutArray[j].bottomMargin.toInt()
+                        innerLayoutArray[j].bottomMargin?.toInt()?:8
                     )
 
                     button.layoutParams = params
@@ -610,8 +610,8 @@ object RenderPopup : ApiInterfaceModel.OnApiResponseListener {
                     button.textAlignment = View.TEXT_ALIGNMENT_CENTER
 
                     params.setMargins(
-                        0, context.dpToPx(innerLayoutArray[j].topMargin.toInt()), 0,
-                        context.dpToPx(innerLayoutArray[j].bottomMargin.toInt())
+                        0, context.dpToPx(innerLayoutArray[j].topMargin?.toInt()?:8), 0,
+                        context.dpToPx(innerLayoutArray[j].bottomMargin?.toInt()?:8)
                     )
 
                     button.layoutParams = params
